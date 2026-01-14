@@ -1,22 +1,22 @@
 import { defineStore } from 'pinia';
 import apiClient from '../../lib/axios';
-import router from '../router/routes';
+import router from '@/router/routes';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null,
         loading: false,
         error: null,
+        // Gunakan flag localStorage hanya untuk UI state
         isLoggedIn: localStorage.getItem('is_logged_in') === 'true',
-        token: localStorage.getItem('auth_token') || null,
     }),
 
     getters: {
         isAdmin: (state) => state.user?.role === 'admin',
         isCashier: (state) => state.user?.role === 'cashier',
         isKitchen: (state) => state.user?.role === 'kitchen',
+
         userAvatar: (state) => {
-            if (state.user?.avatar) return state.user.avatar;
             const seed = state.user?.name || 'User';
             return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
         }
@@ -28,35 +28,41 @@ export const useAuthStore = defineStore('auth', {
             this.error = null;
 
             try {
-                try {
-                    await apiClient.get('/sanctum/csrf-cookie');
-                } catch (e) {
-                    console.log("Skipping CSRF (Dev Mode)");
-                }
+                // 1. Langsung request Login (Tanpa CSRF Cookie sebelumnya)
+                // Credentials harus { email: '...', password: '...' }
+                const response = await apiClient.post('/login', credentials);
 
-                // 2. Request Login
-                await apiClient.post('/login', credentials);
+                // 2. Ambil data user dari response backend
+                // Struktur AuthController kamu: { message: "...", data: { ...user... } }
+                const userData = response.data.data;
 
-                // 3. Setelah login sukses, kita harus manual fetch user
-                // karena endpoint /login Breeze biasanya tidak mengembalikan data user lengkap
-                await this.fetchUser();
-
-                // 4. Set Flag Lokal
+                // 3. Update State
+                this.user = userData;
                 this.isLoggedIn = true;
                 localStorage.setItem('is_logged_in', 'true');
 
-                // 5. Redirect Logic
+                // 4. Redirect sesuai Role
                 this.redirectByRole();
 
                 return true;
+
             } catch (err) {
-                console.error("Login Failed!:", err);
+                console.error("Login Gagal:", err);
+
+                // Handling Error 422 (Validasi)
                 if (err.response?.status === 422) {
-                    this.error = "Email or Password wrong!";
-                } else if (err.response?.status === 419) {
-                    this.error = "Session expired, please refresh page.";
+                    // Ambil pesan error detail dari Laravel
+                    const validationErrors = err.response.data.errors;
+                    if (validationErrors) {
+                        // Ambil error pertama (misal: "email is required")
+                        this.error = Object.values(validationErrors).flat()[0];
+                    } else {
+                        this.error = err.response.data.message || "Data login tidak valid.";
+                    }
+                } else if (err.response?.status === 401) {
+                    this.error = "Email atau password salah.";
                 } else {
-                    this.error = "Server error.";
+                    this.error = "Gagal terhubung ke server.";
                 }
                 return false;
             } finally {
@@ -66,11 +72,13 @@ export const useAuthStore = defineStore('auth', {
 
         async fetchUser() {
             try {
+                // Endpoint AuthController: GET /user
                 const response = await apiClient.get('/user');
-                this.user = response.data;
+                // Struktur: { data: { ...user... } }
+                this.user = response.data.data;
                 this.isLoggedIn = true;
             } catch (err) {
-                // Jika 401 (Unauthenticated), berarti sesi habis
+                // Jika 401, berarti cookie expired/invalid
                 this.user = null;
                 this.isLoggedIn = false;
                 localStorage.removeItem('is_logged_in');
@@ -80,14 +88,12 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             try {
                 await apiClient.post('/logout');
-            } catch (err) {
-                console.warn("Logout error (session might be expired)", err);
-            } finally {
-                this.user = null;
-                this.isLoggedIn = false;
-                localStorage.removeItem('is_logged_in');
-                router.push('/login');
-            }
+            } catch (e) { /* ignore */ }
+
+            this.user = null;
+            this.isLoggedIn = false;
+            localStorage.removeItem('is_logged_in');
+            router.push('/login');
         },
 
         redirectByRole() {

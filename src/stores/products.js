@@ -20,7 +20,7 @@ export const useProductStore = defineStore('product', {
         async fetchProducts() {
             this.loading = true;
             try {
-                const response = await apiClient.get('/products');
+                const response = await apiClient.get('/api/products');
                 this.products = response.data.data;
             } catch (err) {
                 this.error = "Failed to fetch products";
@@ -32,7 +32,7 @@ export const useProductStore = defineStore('product', {
 
         async fetchCategories() {
             try {
-                const response = await apiClient.get('/categories');
+                const response = await apiClient.get('/api/categories');
                 this.categories = response.data.data.map(cat => ({
                     id: cat.id,
                     name: cat.name,
@@ -56,7 +56,7 @@ export const useProductStore = defineStore('product', {
                     is_available: true 
                 };
 
-                await apiClient.post('/admin/products', payload);
+                await apiClient.post('/api/admin/products', payload);
                 this.products.push({
                     id: Date.now(),
                     ...payload,
@@ -87,7 +87,7 @@ export const useProductStore = defineStore('product', {
 
         async deleteProduct(id) {
             try {
-                await apiClient.delete(`/admin/products/${id}`);
+                await apiClient.delete(`/api/admin/products/${id}`);
                 this.products = this.products.filter(p => p.id !== id);
                 return true;
             } catch (err) {

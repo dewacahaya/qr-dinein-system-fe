@@ -1,7 +1,6 @@
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
-import { useProductStore } from '@/stores/products';
-import { formatPrice } from '../../../../lib/utils';
+import { ref, onMounted, reactive } from 'vue';
+import { useUserStore } from '@/stores/user'; // Use UserStore, not ProductStore
 
 // Components
 import Sidebar from '@/components/admin/Sidebar.vue';
@@ -12,7 +11,7 @@ import BaseSelect from '@/components/base/BaseSelect.vue';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseCard from '@/components/base/BaseCard.vue';
 
-const productStore = useProductStore();
+const userStore = useUserStore();
 const sidebarOpen = ref(false);
 const showModal = ref(false);
 const isEditMode = ref(false);
@@ -20,94 +19,96 @@ const isEditMode = ref(false);
 // Form State
 const form = reactive({
     id: null,
-    category_id: '',
     name: '',
-    description: '',
-    price: '',
-    image: null,
-    is_available: true
+    email: '',
+    password: '',
+    role: '',
+    avatar: null
 });
 
 // Preview Image State
 const imagePreview = ref(null);
 
-const availabilityOptions = [
-    { label: 'Available', value: true },
-    { label: 'Out of Stock', value: false }
+// Role Options
+const roleOptions = [
+    { label: 'Admin', value: 'admin' },
+    { label: 'Cashier', value: 'cashier' },
+    { label: 'Kitchen', value: 'kitchen' }
 ];
 
 // 1. Initial Data
-onMounted(async () => {
-    await Promise.all([
-        productStore.fetchProducts(),
-        productStore.fetchCategories()
-    ]);
+onMounted(() => {
+    userStore.fetchUsers();
 });
 
-// 2. Handle File Upload (Preview Image)
+// 2. Handle File Upload
 const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
         imagePreview.value = URL.createObjectURL(file);
-        // Di Real App: form.image = file;
-        // Di Mock App: Kita simpan URL preview aja biar tampil
-        form.image = imagePreview.value;
+        form.avatar = imagePreview.value; // Store preview URL for mock
     }
 };
 
 // 3. Open Modal Add
 const openAddModal = () => {
     isEditMode.value = false;
-    // Reset Form
     form.id = null;
-    form.category_id = '';
     form.name = '';
-    form.description = '';
-    form.price = '';
-    form.image = null;
-    form.is_available = true;
+    form.email = '';
+    form.password = ''; // Reset password
+    form.role = '';
+    form.avatar = null;
     imagePreview.value = null;
-
     showModal.value = true;
 };
 
 // 4. Open Modal Edit
-const openEditModal = (product) => {
+const openEditModal = (user) => {
     isEditMode.value = true;
-    form.id = product.id;
-    form.category_id = product.category_id;
-    form.name = product.name;
-    form.description = product.description;
-    form.price = product.price;
-    form.is_available = product.is_available;
+    form.id = user.id;
+    form.name = user.name;
+    form.email = user.email;
+    form.role = user.role;
+    form.password = ''; // Don't show old password
 
-    imagePreview.value = product.image;
+    // Check if avatar is URL or null
+    imagePreview.value = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`;
+
     showModal.value = true;
 };
 
 // 5. Submit Form
 const handleSubmit = async () => {
-    if (!form.name || !form.price || !form.category_id) {
-        return alert("Mohon lengkapi data produk (Kategori, Nama, Harga)");
+    if (!form.name || !form.email || !form.role) {
+        return alert("Please fill in Name, Email, and Role.");
+    }
+
+    if (!isEditMode.value && !form.password) {
+        return alert("Password is required for new users.");
     }
 
     let success = false;
+
     if (isEditMode.value) {
-        success = await productStore.updateProduct(form.id, { ...form });
+        // Logic Update (Simulated since typically logic is similar to create in mock)
+        // Ideally: await userStore.updateUser(form.id, form);
+        alert("Edit User feature is simulated.");
+        success = true;
     } else {
-        success = await productStore.createProduct({ ...form });
+        success = await userStore.createUser({ ...form });
     }
 
     if (success) {
         showModal.value = false;
-        alert(isEditMode.value ? 'Produk berhasil diupdate!' : 'Produk berhasil dibuat!');
+        alert(isEditMode.value ? 'User updated successfully!' : 'User created successfully!');
     }
 };
 
-// 6. Delete Product
+// 6. Delete User
 const handleDelete = async (id) => {
-    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-        await productStore.deleteProduct(id);
+    if (confirm('Are you sure you want to delete this user?')) {
+        await userStore.deleteUser(id);
     }
 };
 </script>
@@ -128,11 +129,11 @@ const handleDelete = async (id) => {
                     <!-- Page Header -->
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Manage Staff</h1>
-                            <p class="text-sm text-gray-500 mt-1">Manage your product list here!</p>
+                            <h1 class="text-2xl font-bold text-gray-900">Manage Users</h1>
+                            <p class="text-sm text-gray-500 mt-1">Manage your staff accounts here.</p>
                         </div>
                         <BaseButton @click="openAddModal" variant="primary" class="px-6 py-3 rounded-xl shadow-lg">
-                            + Add Menu
+                            + Add User
                         </BaseButton>
                     </div>
 
@@ -143,70 +144,63 @@ const handleDelete = async (id) => {
                                 <thead
                                     class="bg-gray-50 text-gray-900 uppercase font-bold text-xs tracking-wider border-b border-gray-200">
                                     <tr>
-                                        <th class="px-6 py-4">Image</th>
+                                        <th class="px-6 py-4">No</th>
+                                        <th class="px-6 py-4">Avatar</th>
                                         <th class="px-6 py-4">Name</th>
-                                        <th class="px-6 py-4">Category</th>
-                                        <th class="px-6 py-4">Price</th>
-                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Role</th>
                                         <th class="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
-                                    <tr v-if="productStore.loading">
-                                        <td colspan="6" class="text-center py-10">Loading data...</td>
+                                    <tr v-if="userStore.loading">
+                                        <td colspan="5" class="text-center py-10">Loading users...</td>
                                     </tr>
-                                    <tr v-else-if="productStore.products.length === 0">
-                                        <td colspan="6" class="text-center py-10 text-gray-400">Product not found.</td>
+                                    <tr v-else-if="userStore.users.length === 0">
+                                        <td colspan="5" class="text-center py-10 text-gray-400">No users found.</td>
                                     </tr>
-                                    <tr v-else v-for="product in productStore.products" :key="product.id"
+                                    <tr v-else v-for="(user, index) in userStore.users" :key="user.id"
                                         class="hover:bg-gray-50 transition-colors">
 
-                                        <!-- Image -->
+                                        <!-- No -->
+                                        <td class="px-6 py-4">
+                                            {{ index + 1 }}
+                                        </td>
+
+                                        <!-- Avatar -->
                                         <td class="px-6 py-4">
                                             <div
-                                                class="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
-                                                <img v-if="product.image" :src="product.image"
-                                                    class="w-full h-full object-cover" alt="Menu" />
-                                                <span v-else class="text-xs text-gray-400">No img</span>
+                                                class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-gray-300">
+                                                <img :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
+                                                    class="w-full h-full object-cover" alt="Avatar" />
                                             </div>
                                         </td>
 
-                                        <!-- Name & Desc -->
+                                        <!-- Name & Email -->
                                         <td class="px-6 py-4">
-                                            <p class="font-bold text-gray-900 text-sm">{{ product.name }}</p>
-                                            <p class="text-xs text-gray-400 truncate max-w-50">{{
-                                                product.description }}</p>
+                                            <p class="font-bold text-gray-900 text-sm">{{ user.name }}</p>
+                                            <p class="text-xs text-gray-400">{{ user.email }}</p>
                                         </td>
 
-                                        <!-- Category -->
+                                        <!-- Role Badge -->
                                         <td class="px-6 py-4">
-                                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">
-                                                {{ productStore.getCategoryName(product.category_id) }}
-                                            </span>
-                                        </td>
-
-                                        <!-- Price -->
-                                        <td class="px-6 py-4 font-bold text-gray-900">
-                                            {{ formatPrice(product.price) }}
-                                        </td>
-
-                                        <!-- Status -->
-                                        <td class="px-6 py-4">
-                                            <span class="px-2 py-1 rounded text-xs font-bold"
-                                                :class="product.is_available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                                                {{ product.is_available ? 'Ready' : 'Habis' }}
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold capitalize" :class="{
+                                                'bg-purple-100 text-purple-700': user.role === 'admin',
+                                                'bg-blue-100 text-blue-700': user.role === 'cashier',
+                                                'bg-orange-100 text-orange-700': user.role === 'kitchen',
+                                            }">
+                                                {{ user.role }}
                                             </span>
                                         </td>
 
                                         <!-- Actions -->
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-end gap-2">
-                                                <BaseButton variant="secondary" @click="openEditModal(product)"
-                                                    class="px-4 py-2 text-black rounded-lg transition">
+                                                <BaseButton variant="outline" @click="openEditModal(user)"
+                                                    class="px-3 py-1.5 text-xs rounded-lg">
                                                     Edit
                                                 </BaseButton>
-                                                <BaseButton @click="handleDelete(product.id)"
-                                                    class="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition">
+                                                <BaseButton variant="danger" @click="handleDelete(user.id)"
+                                                    class="px-3 py-1.5 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 shadow-none">
                                                     Delete
                                                 </BaseButton>
                                             </div>
@@ -224,41 +218,38 @@ const handleDelete = async (id) => {
 
     <!-- MODAL FORM -->
     <BaseModal :isOpen="showModal" @close="showModal = false">
-        <div class="bg-white w-full rounded-4xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full rounded-[2rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="mb-6">
                 <h2 class="text-2xl font-black text-gray-900 mb-1">
-                    {{ isEditMode ? 'Edit Menu' : 'Add Menu' }}
+                    {{ isEditMode ? 'Edit User' : 'Add New User' }}
                 </h2>
+                <p class="text-sm text-gray-500">Fill in the user details below.</p>
             </div>
 
             <form @submit.prevent="handleSubmit" class="space-y-5">
-                <BaseSelect label="Category" v-model="form.category_id" :options="productStore.categories"
-                    placeholder="Select an category" required />
-                <BaseInput v-model="form.name" label="Product Name" placeholder="Example: Espresso, Cappuccino"
-                    required />
-                <div>
-                    <label
-                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Description</label>
-                    <textarea v-model="form.description" rows="3" placeholder="Description..."
-                        class="w-full bg-[#F8F9FD] text-gray-900 text-sm font-bold rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-black transition-all border border-transparent resize-none placeholder:text-gray-300"></textarea>
-                </div>
 
-                <BaseInput type="number" v-model="form.price" label="Price (Rp)" placeholder="Example: 25000"
+                <BaseInput v-model="form.name" label="Full Name" placeholder="e.g. John Doe" required />
+
+                <BaseInput v-model="form.email" label="Email Address" type="email" placeholder="e.g. john@glory.com"
                     required />
-                <div v-if="isEditMode">
-                    <BaseSelect label="Availability Status" v-model="form.is_available"
-                        :options="availabilityOptions" />
-                </div>
+
+                <BaseInput v-model="form.password" label="Password" type="password" placeholder="••••••••"
+                    :required="!isEditMode" />
+                <p v-if="isEditMode" class="text-[10px] text-gray-400 -mt-3 ml-1">*Leave blank if you don't want to
+                    change password</p>
+
+                <BaseSelect label="User Role" v-model="form.role" :options="roleOptions" placeholder="Select Role"
+                    required />
 
                 <!-- Image Upload with Preview -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Product
-                        Image</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Avatar /
+                        Photo</label>
 
                     <div class="flex items-center gap-4">
                         <!-- Preview Box -->
                         <div
-                            class="w-20 h-20 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 flex items-center justify-center shrink-0">
+                            class="w-16 h-16 bg-gray-100 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center shrink-0">
                             <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover" />
                             <span v-else class="text-[10px] text-gray-400">No Img</span>
                         </div>
@@ -278,8 +269,8 @@ const handleDelete = async (id) => {
                         Cancel
                     </button>
                     <BaseButton type="submit" variant="primary" class="flex-1 py-3.5 rounded-xl"
-                        :loading="productStore.loading">
-                        {{ isEditMode ? 'Save Changes' : 'Add Product' }}
+                        :loading="userStore.loading">
+                        {{ isEditMode ? 'Save Changes' : 'Add User' }}
                     </BaseButton>
                 </div>
             </form>

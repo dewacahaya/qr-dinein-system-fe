@@ -21,7 +21,7 @@ const menuGroups = [
         name: 'STORE',
         items: [
             { label: 'Table (QR)', route: '/admin/tables', icon: 'QrCode' },
-            { label: 'Staff', route: '/admin/users', icon: 'Users' },
+            { label: 'Users', route: '/admin/users', icon: 'Users' },
         ]
     }
 ];

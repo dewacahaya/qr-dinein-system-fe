@@ -10,7 +10,7 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 const form = ref({
-    email: '',
+    username: '',
     password: ''
 });
 
@@ -48,7 +48,7 @@ const handleLogin = async () => {
     // Panggil action login dari store
     // Redirect sudah dihandle otomatis di dalam store (redirectByRole)
     await authStore.login({
-        email: form.value.email,
+        username: form.value.username,
         password: form.value.password
     });
 };
@@ -95,8 +95,7 @@ const handleLogin = async () => {
                     <form @submit.prevent="handleLogin" class="space-y-6">
                         <!-- Email Input -->
                         <div>
-                            <BaseInput v-model="form.email" label="Email Address" placeholder="name@glorycafe.com"
-                                type="email" required />
+                            <BaseInput v-model="form.username" label="Username" placeholder="Example: Admin Cafe" required />
                         </div>
 
                         <!-- Password Input -->
@@ -110,16 +109,6 @@ const handleLogin = async () => {
                             </div>
                         </div>
 
-                        <!-- Error Message -->
-                        <!-- <div v-if="errorMsg"
-                            class="bg-red-50 text-red-500 text-sm font-bold p-3 rounded-xl flex items-center gap-2 animate-pulse">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            {{ errorMsg }}
-                        </div> -->
-
                         <div v-if="authStore.error"
                             class="bg-red-50 text-red-500 text-sm font-bold p-3 rounded-xl flex items-center gap-2 animate-pulse">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,12 +117,6 @@ const handleLogin = async () => {
                             </svg>
                             {{ authStore.error }}
                         </div>
-
-                        <!-- Login Button -->
-                        <!-- <BaseButton block variant="primary" :loading="loading"
-                            class="py-4 text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-gray-900/20 hover:shadow-gray-900/40">
-                            Sign In
-                        </BaseButton> -->
 
                         <BaseButton block variant="primary" :loading="authStore.loading"
                             class="py-4 text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-gray-900/20 hover:shadow-gray-900/40">
