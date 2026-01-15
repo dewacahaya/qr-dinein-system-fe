@@ -5,13 +5,14 @@ import router from '@/router/routes';
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null,
+        token: localStorage.getItem('auth_token') || null,
         loading: false,
         error: null,
-        // Gunakan flag localStorage hanya untuk UI state
-        isLoggedIn: localStorage.getItem('is_logged_in') === 'true',
+        // isLoggedIn: localStorage.getItem('is_logged_in') === 'true',
     }),
 
     getters: {
+        isLoggedIn: (state) => !!state.token && !!state.user,
         isAdmin: (state) => state.user?.role === 'admin',
         isCashier: (state) => state.user?.role === 'cashier',
         isKitchen: (state) => state.user?.role === 'kitchen',
@@ -28,42 +29,38 @@ export const useAuthStore = defineStore('auth', {
             this.error = null;
 
             try {
-                // 1. Langsung request Login (Tanpa CSRF Cookie sebelumnya)
-                // Credentials harus { email: '...', password: '...' }
                 const response = await apiClient.post('/login', credentials);
 
-                // 2. Ambil data user dari response backend
-                // Struktur AuthController kamu: { message: "...", data: { ...user... } }
-                const userData = response.data.data;
+                // Cek struktur response backend
+                const responseData = response.data;
+                const userData = responseData.data;
 
-                // 3. Update State
+                // COBA AMBIL TOKEN DARI BERBAGAI KEMUNGKINAN POSISI
+                // Jika Backend sudah diperbaiki temanmu, token akan ada disini
+                const token = responseData.access_token || responseData.token;
+
+                if (!token) {
+                    console.warn("PERINGATAN: Backend tidak mengembalikan token di JSON. Auth mungkin gagal saat refresh.");
+                }
+
+                // Simpan Data
                 this.user = userData;
-                this.isLoggedIn = true;
+                if (token) {
+                    this.token = token;
+                    localStorage.setItem('auth_token', token);
+                    // Set Header Default untuk request selanjutnya
+                    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                }
+
+                // Tandai logged in
                 localStorage.setItem('is_logged_in', 'true');
 
-                // 4. Redirect sesuai Role
                 this.redirectByRole();
-
                 return true;
 
             } catch (err) {
-                console.error("Login Gagal:", err);
-
-                // Handling Error 422 (Validasi)
-                if (err.response?.status === 422) {
-                    // Ambil pesan error detail dari Laravel
-                    const validationErrors = err.response.data.errors;
-                    if (validationErrors) {
-                        // Ambil error pertama (misal: "email is required")
-                        this.error = Object.values(validationErrors).flat()[0];
-                    } else {
-                        this.error = err.response.data.message || "Data login tidak valid.";
-                    }
-                } else if (err.response?.status === 401) {
-                    this.error = "Email atau password salah.";
-                } else {
-                    this.error = "Gagal terhubung ke server.";
-                }
+                console.error("Login Error:", err);
+                this.error = err.response?.data?.message || "Login gagal.";
                 return false;
             } finally {
                 this.loading = false;
@@ -71,17 +68,15 @@ export const useAuthStore = defineStore('auth', {
         },
 
         async fetchUser() {
+            // Jangan fetch jika tidak punya token (kecuali backend pakai cookie session murni)
+            if (!this.token && !localStorage.getItem('auth_token')) return;
+
             try {
-                // Endpoint AuthController: GET /user
                 const response = await apiClient.get('/user');
-                // Struktur: { data: { ...user... } }
-                this.user = response.data.data;
-                this.isLoggedIn = true;
+                this.user = response.data.data || response.data;
             } catch (err) {
-                // Jika 401, berarti cookie expired/invalid
-                this.user = null;
-                this.isLoggedIn = false;
-                localStorage.removeItem('is_logged_in');
+                // Token expired -> Logout
+                this.logout();
             }
         },
 
@@ -91,8 +86,11 @@ export const useAuthStore = defineStore('auth', {
             } catch (e) { /* ignore */ }
 
             this.user = null;
-            this.isLoggedIn = false;
+            this.token = null;
+            localStorage.removeItem('auth_token');
             localStorage.removeItem('is_logged_in');
+            delete apiClient.defaults.headers.common['Authorization'];
+
             router.push('/login');
         },
 
@@ -101,7 +99,7 @@ export const useAuthStore = defineStore('auth', {
             if (role === 'admin') router.push('/admin');
             else if (role === 'cashier') router.push('/cashier');
             else if (role === 'kitchen') router.push('/kitchen');
-            else router.push('/admin'); // Default fallback
+            else router.push('/');
         }
     }
 });

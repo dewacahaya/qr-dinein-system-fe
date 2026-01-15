@@ -11,7 +11,7 @@ export const useProductStore = defineStore('product', {
 
     getters: {
         getCategoryName: (state) => (catId) => {
-            const cat = state.categories.find(c => c.id === catId);
+            const cat = state.categories.find(c => c.id == catId);
             return cat ? cat.name : '-';
         }
     },
@@ -20,10 +20,9 @@ export const useProductStore = defineStore('product', {
         async fetchProducts() {
             this.loading = true;
             try {
-                const response = await apiClient.get('/api/products');
-                this.products = response.data.data;
+                const response = await apiClient.get('/products');
+                this.products = response.data.data || response.data;
             } catch (err) {
-                this.error = "Failed to fetch products";
                 console.error(err);
             } finally {
                 this.loading = false;
@@ -31,38 +30,35 @@ export const useProductStore = defineStore('product', {
         },
 
         async fetchCategories() {
+            this.loading = true;
             try {
-                const response = await apiClient.get('/api/categories');
-                this.categories = response.data.data.map(cat => ({
-                    id: cat.id,
-                    name: cat.name,
-                    label: cat.name,
-                    value: cat.id
-                }));
+                const response = await apiClient.get('/categories');
+                this.categories = response.data.data || response.data;
             } catch (err) {
-                console.error(err);
+                console.error("Fetch Error:", err);
+                this.error = "Failed to fetch categories.";
+            } finally {
+                this.loading = false;
             }
         },
 
-        // --- CRUD ACTIONS ---
-        async createProduct(formData) {
+        // CREATE (FormData)
+        async createProduct(formDataObj) {
             try {
-                // Karena ada upload file, biasanya pakai FormData
-                // Tapi Mock API kita terima JSON biasa, jadi kita sesuaikan dulu
-                // Nanti di Real API pakai: const data = new FormData(); ...
+                // Convert Object JS ke FormData
+                const formData = new FormData();
+                for (const key in formDataObj) {
+                    // Skip jika null
+                    if (formDataObj[key] !== null) {
+                        formData.append(key, formDataObj[key]);
+                    }
+                }
 
-                const payload = {
-                    ...formData,
-                    is_available: true 
-                };
-
-                await apiClient.post('/api/admin/products', payload);
-                this.products.push({
-                    id: Date.now(),
-                    ...payload,
-                    image: payload.image || 'https://placehold.co/300'
+                await apiClient.post('/admin/products', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
+                await this.fetchProducts();
                 return true;
             } catch (err) {
                 this.error = err.response?.data?.message || "Failed to create product";
@@ -70,24 +66,37 @@ export const useProductStore = defineStore('product', {
             }
         },
 
-        async updateProduct(id, formData) {
+        // UPDATE (FormData dengan spoofing _method: PUT)
+        async updateProduct(id, formDataObj) {
             try {
-                // await apiClient.put(`/admin/products/${id}`, formData);
+                const formData = new FormData();
+                formData.append('_method', 'PUT'); // Spoofing method
 
-                // Simulasi Update Lokal
-                const index = this.products.findIndex(p => p.id === id);
-                if (index !== -1) {
-                    this.products[index] = { ...this.products[index], ...formData };
+                for (const key in formDataObj) {
+                    // Kirim gambar hanya jika ada file baru (bukan string URL)
+                    if (key === 'image' && typeof formDataObj[key] === 'string') {
+                        continue;
+                    }
+                    if (formDataObj[key] !== null) {
+                        formData.append(key, formDataObj[key]);
+                    }
                 }
+
+                await apiClient.post(`/admin/products/${id}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                await this.fetchProducts();
                 return true;
             } catch (err) {
+                this.error = err.response?.data?.message || "Failed to update product";
                 return false;
             }
         },
 
         async deleteProduct(id) {
             try {
-                await apiClient.delete(`/api/admin/products/${id}`);
+                await apiClient.delete(`/admin/products/${id}`);
                 this.products = this.products.filter(p => p.id !== id);
                 return true;
             } catch (err) {

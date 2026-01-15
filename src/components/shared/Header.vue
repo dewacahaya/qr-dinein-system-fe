@@ -35,11 +35,6 @@ const handleLogout = async () => {
 <template>
     <header class="sticky top-0 z-40 flex w-full bg-white drop-shadow-sm font-sans">
         <div class="flex grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
-            <div class="items-center gap-4 hidden sm:flex">
-                <img src="@/assets/images/logo.png" alt="logo" class="w-12 h-12">
-                <span class="font-bold text-lg tracking-widest text-gray-900">GloryCafe</span>
-            </div>
-            <!-- HAMBURGER BUTTON (Hanya muncul jika ADMIN & di Mobile) -->
             <div class="flex items-center gap-2 sm:gap-4 lg:hidden">
                 <button v-if="isAdmin" class="z-50 block rounded-sm bg-white p-1.5 shadow-sm hover:bg-gray-50"
                     @click="$emit('toggle-sidebar')">
@@ -51,12 +46,9 @@ const handleLogout = async () => {
                     </span>
                 </button>
             </div>
-
-            <!-- Spacer jika hamburger hidden -->
             <div v-if="!isAdmin"></div>
-
             <!-- USER AREA -->
-            <div class="flex items-center gap-3 2xsm:gap-7">
+            <div class="flex items-center gap-3 ml-auto 2xsm:gap-7">
                 <div class="flex items-center gap-4">
                     <span class="hidden text-right sm:block">
                         <span class="block text-sm font-bold text-black">

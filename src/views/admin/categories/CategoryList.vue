@@ -1,16 +1,17 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
+import { useCategoryStore } from '@/stores/category';
+
 import Sidebar from '@/components/admin/Sidebar.vue';
 import Header from '@/components/shared/Header.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
 import BaseInput from '@/components/base/BaseInput.vue';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseCard from '@/components/base/BaseCard.vue';
-import apiClient from '../../../../lib/axios';
 
+const categoryStore = useCategoryStore();
 const sidebarOpen = ref(false);
 const showModal = ref(false);
-const categories = ref([]);
 const loading = ref(false);
 const isEditMode = ref(false);
 
@@ -20,18 +21,9 @@ const form = reactive({
     name: '',
 })
 
-// 1. Fetch Categories
-const fetchCategories = async () => {
-    loading.value = true;
-    try {
-        const response = await apiClient.get('/categories');
-        categories.value = response.data.data;
-    } catch (error) {
-        console.error("Failed to fetch categories", error);
-    } finally {
-        loading.value = false;
-    }
-};
+onMounted(() => {
+    categoryStore.fetchCategories();
+});
 
 // 2. Open Modal (Add Mode)
 const openAddModal = () => {
@@ -49,43 +41,30 @@ const openEditModal = (category) => {
     showModal.value = true;
 };
 
-// 4. Submit (Create or Update)
 const handleSubmit = async () => {
     if (!form.name) return alert("Category name is required");
 
-    try {
-        if (isEditMode.value) {
-            const index = categories.value.findIndex(c => c.id === form.id);
-            if (index !== -1) categories.value[index].name = form.name;
-            alert('Successfully updated category');
-        } else {
-            categories.value.push({ id: Date.now(), name: form.name });
-            alert('Successfully created category');
-        }
+    let success = false;
+    if (isEditMode.value) {
+        success = await categoryStore.updateCategory(form.id, { name: form.name });
+    } else {
+        success = await categoryStore.createCategory({ name: form.name });
+    }
+
+    if (success) {
         showModal.value = false;
-    } catch (error) {
-        console.error(error);
-        alert('Failed to manage category');
+        alert(isEditMode.value ? 'Category updated successfully!' : 'Category created successfully!');
+    } else {
+        alert(categoryStore.error);
     }
 };
 
-// 5. Delete
 const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-
-    try {
-        await apiClient.delete(`/admin/categories/${id}`);
-
-        // Simulasi hapus lokal
-        categories.value = categories.value.filter(c => c.id !== id);
-    } catch (error) {
-        console.error(error);
+    if (confirm('Are you sure you want to delete this category?')) {
+        const success = await categoryStore.deleteCategory(id);
+        if (success) alert('Category deleted successfully');
     }
 };
-
-onMounted(() => {
-    fetchCategories();
-});
 </script>
 
 <template>
@@ -124,10 +103,10 @@ onMounted(() => {
                                     <tr v-if="loading">
                                         <td colspan="3" class="text-center py-10">Loading data...</td>
                                     </tr>
-                                    <tr v-else-if="categories.length === 0">
+                                    <tr v-else-if="categoryStore.categories.length === 0">
                                         <td colspan="3" class="text-center py-10">Category not found</td>
                                     </tr>
-                                    <tr v-else v-for="(cat, index) in categories" :key="cat.id"
+                                    <tr v-else v-for="(cat, index) in categoryStore.categories" :key="cat.id"
                                         class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 font-medium">{{ index + 1 }}</td>
                                         <td class="px-6 py-4 font-bold text-gray-900">{{ cat.name }}</td>

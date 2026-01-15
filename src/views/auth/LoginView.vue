@@ -14,36 +14,6 @@ const form = ref({
     password: ''
 });
 
-const loading = ref(false);
-const errorMsg = ref('');
-
-// const handleLogin = async () => {
-//     loading.value = true;
-//     errorMsg.value = '';
-
-//     try {
-//         // Simulasi Login API Call
-//         await new Promise(resolve => setTimeout(resolve, 1500));
-
-//         // Logic routing sederhana berdasarkan email (Simulasi Role untuk Development)
-//         // Nanti diganti dengan logic cek role dari response API
-//         if (form.value.email.includes('admin')) {
-//             router.push('/admin/dashboard');
-//         } else if (form.value.email.includes('cashier')) {
-//             router.push('/cashier');
-//         } else if (form.value.email.includes('kitchen')) {
-//             router.push('/kitchen');
-//         } else {
-//             router.push('/admin/dashboard');
-//         }
-
-//     } catch (err) {
-//         errorMsg.value = 'Email or password is incorrect';
-//     } finally {
-//         loading.value = false;
-//     }
-// };
-
 const handleLogin = async () => {
     // Panggil action login dari store
     // Redirect sudah dihandle otomatis di dalam store (redirectByRole)

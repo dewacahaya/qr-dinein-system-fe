@@ -3,7 +3,6 @@ import { ref, onMounted, reactive, computed } from 'vue';
 import { useProductStore } from '@/stores/products';
 import { formatPrice } from '../../../../lib/utils';
 
-// Components
 import Sidebar from '@/components/admin/Sidebar.vue';
 import Header from '@/components/shared/Header.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
@@ -28,7 +27,6 @@ const form = reactive({
     is_available: true
 });
 
-// Preview Image State
 const imagePreview = ref(null);
 
 const availabilityOptions = [
@@ -44,21 +42,17 @@ onMounted(async () => {
     ]);
 });
 
-// 2. Handle File Upload (Preview Image)
 const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
+        form.image = file;
         imagePreview.value = URL.createObjectURL(file);
-        // Di Real App: form.image = file;
-        // Di Mock App: Kita simpan URL preview aja biar tampil
-        form.image = imagePreview.value;
     }
 };
 
 // 3. Open Modal Add
 const openAddModal = () => {
     isEditMode.value = false;
-    // Reset Form
     form.id = null;
     form.category_id = '';
     form.name = '';
@@ -71,7 +65,6 @@ const openAddModal = () => {
     showModal.value = true;
 };
 
-// 4. Open Modal Edit
 const openEditModal = (product) => {
     isEditMode.value = true;
     form.id = product.id;
@@ -160,7 +153,6 @@ const handleDelete = async (id) => {
                                     </tr>
                                     <tr v-else v-for="product in productStore.products" :key="product.id"
                                         class="hover:bg-gray-50 transition-colors">
-
                                         <!-- Image -->
                                         <td class="px-6 py-4">
                                             <div

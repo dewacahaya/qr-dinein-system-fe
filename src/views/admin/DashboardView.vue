@@ -12,7 +12,7 @@ const sidebarOpen = ref(false);
     <div class="flex h-screen overflow-hidden bg-gray-100 font-sans text-gray-900">
         <Sidebar :sidebar-open="sidebarOpen" @close-sidebar="sidebarOpen = false" />
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-            <Header />
+            <Header :sidebar-open="sidebarOpen" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
             <main>
                 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
@@ -22,7 +22,8 @@ const sidebarOpen = ref(false);
                     </div>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
                         <BaseCard class="flex items-center gap-4">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 text-2xl">💰</div>
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 text-2xl">
+                                💰</div>
                             <div>
                                 <h4 class="text-xl font-bold text-black">{{ formatPrice(2500000) }}</h4>
                                 <span class="text-xs font-medium text-gray-500">Total Revenue</span>

@@ -133,7 +133,7 @@ const handleDelete = async (id) => {
                             <p class="text-sm text-gray-500 mt-1">Manage your staff accounts here.</p>
                         </div>
                         <BaseButton @click="openAddModal" variant="primary" class="px-6 py-3 rounded-xl shadow-lg">
-                            + Add User
+                            + Add
                         </BaseButton>
                     </div>
 
@@ -145,7 +145,6 @@ const handleDelete = async (id) => {
                                     class="bg-gray-50 text-gray-900 uppercase font-bold text-xs tracking-wider border-b border-gray-200">
                                     <tr>
                                         <th class="px-6 py-4">No</th>
-                                        <th class="px-6 py-4">Avatar</th>
                                         <th class="px-6 py-4">Name</th>
                                         <th class="px-6 py-4">Role</th>
                                         <th class="px-6 py-4 text-right">Actions</th>
@@ -167,13 +166,13 @@ const handleDelete = async (id) => {
                                         </td>
 
                                         <!-- Avatar -->
-                                        <td class="px-6 py-4">
+                                        <!-- <td class="px-6 py-4">
                                             <div
                                                 class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-gray-300">
                                                 <img :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
                                                     class="w-full h-full object-cover" alt="Avatar" />
                                             </div>
-                                        </td>
+                                        </td> -->
 
                                         <!-- Name & Email -->
                                         <td class="px-6 py-4">
@@ -184,7 +183,6 @@ const handleDelete = async (id) => {
                                         <!-- Role Badge -->
                                         <td class="px-6 py-4">
                                             <span class="px-3 py-1 rounded-full text-xs font-bold capitalize" :class="{
-                                                'bg-purple-100 text-purple-700': user.role === 'admin',
                                                 'bg-blue-100 text-blue-700': user.role === 'cashier',
                                                 'bg-orange-100 text-orange-700': user.role === 'kitchen',
                                             }">
@@ -218,7 +216,7 @@ const handleDelete = async (id) => {
 
     <!-- MODAL FORM -->
     <BaseModal :isOpen="showModal" @close="showModal = false">
-        <div class="bg-white w-full rounded-[2rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full rounded-4xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="mb-6">
                 <h2 class="text-2xl font-black text-gray-900 mb-1">
                     {{ isEditMode ? 'Edit User' : 'Add New User' }}
@@ -270,7 +268,7 @@ const handleDelete = async (id) => {
                     </button>
                     <BaseButton type="submit" variant="primary" class="flex-1 py-3.5 rounded-xl"
                         :loading="userStore.loading">
-                        {{ isEditMode ? 'Save Changes' : 'Add User' }}
+                        {{ isEditMode ? 'Save Changes' : 'Create User' }}
                     </BaseButton>
                 </div>
             </form>
