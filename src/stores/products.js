@@ -23,7 +23,7 @@ export const useProductStore = defineStore('product', {
                 const response = await apiClient.get('/products');
                 this.products = response.data.data || response.data;
             } catch (err) {
-                console.error(err);
+                console.error("Fetch Error:", err);
             } finally {
                 this.loading = false;
             }

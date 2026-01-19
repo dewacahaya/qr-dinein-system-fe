@@ -45,7 +45,7 @@ const router = createRouter({
         {
             path: '/admin',
             redirect: '/admin/dashboard',
-            meta: { requiresAuth: true, role: 'admin' } // Group Meta
+            meta: { requiresAuth: true, role: 'admin' }
         },
         {
             path: '/admin/dashboard',
@@ -102,38 +102,36 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
-    // Cek apakah ada token di storage tapi user belum ada di state (Kondisi Refresh)
-    const hasToken = localStorage.getItem('auth_token');
+    const loggedInFlag = localStorage.getItem('is_logged_in') === 'true';
 
-    if (hasToken && !authStore.user) {
+    if (loggedInFlag && !authStore.user) {
         try {
             await authStore.fetchUser();
         } catch (error) {
-            // Token tidak valid lagi
-            return next({ name: 'login' });
+            console.error('Error fetching user:', error);
         }
     }
 
-    // Logic Proteksi Route
-    if (to.meta.requiresAuth) {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!authStore.user) {
             return next({ name: 'login' });
         }
 
-        // Cek Role
         if (to.meta.role && authStore.user.role !== to.meta.role) {
-            // Salah role, kembalikan ke dashboard masing-masing
+            // Redirect user yang salah kamar
+            if (authStore.isAdmin) return next({ name: 'admin-dashboard' });
+            if (authStore.isCashier) return next({ name: 'cashier-dashboard' });
+            if (authStore.isKitchen) return next({ name: 'kitchen-dashboard' });
+            return next({ name: 'login' });
+        }
+    }
+
+    else if (to.meta.guest) {
+        if (authStore.user) {
             if (authStore.isAdmin) return next({ name: 'admin-dashboard' });
             if (authStore.isCashier) return next({ name: 'cashier-dashboard' });
             if (authStore.isKitchen) return next({ name: 'kitchen-dashboard' });
         }
-    }
-
-    // Halaman Tamu (Login)
-    else if (to.meta.guest && authStore.user) {
-        if (authStore.isAdmin) return next({ name: 'admin-dashboard' });
-        if (authStore.isCashier) return next({ name: 'cashier-dashboard' });
-        return next();
     }
 
     next();
