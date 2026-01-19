@@ -173,7 +173,7 @@ const handleDelete = async (id) => {
                                         <!-- Category -->
                                         <td class="px-6 py-4">
                                             <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">
-                                                {{ productStore.getCategoryName(product.category_id) }}
+                                                {{ product.category.name }}
                                             </span>
                                         </td>
 

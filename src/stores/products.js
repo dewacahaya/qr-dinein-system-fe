@@ -33,7 +33,15 @@ export const useProductStore = defineStore('product', {
             this.loading = true;
             try {
                 const response = await apiClient.get('/categories');
-                this.categories = response.data.data || response.data;
+                const rawData = response.data.data || response.data;
+                this.categories = rawData.map(cat => ({
+                    label: cat.name,
+                    value: cat.id,
+                    id: cat.id,
+                    name: cat.name
+                }));
+
+                console.log("Categories Loaded:", this.categories);
             } catch (err) {
                 console.error("Fetch Error:", err);
                 this.error = "Failed to fetch categories.";
@@ -42,15 +50,14 @@ export const useProductStore = defineStore('product', {
             }
         },
 
-        // CREATE (FormData)
         async createProduct(formDataObj) {
             try {
                 // Convert Object JS ke FormData
                 const formData = new FormData();
                 for (const key in formDataObj) {
-                    // Skip jika null
                     if (formDataObj[key] !== null) {
-                        formData.append(key, formDataObj[key]);
+                        const value = typeof formDataObj[key] === 'boolean' ? (formDataObj[key] ? 1 : 0) : formDataObj[key];
+                        formData.append(key, value);
                     }
                 }
 
@@ -66,19 +73,16 @@ export const useProductStore = defineStore('product', {
             }
         },
 
-        // UPDATE (FormData dengan spoofing _method: PUT)
         async updateProduct(id, formDataObj) {
             try {
                 const formData = new FormData();
-                formData.append('_method', 'PUT'); // Spoofing method
+                formData.append('_method', 'PUT');
 
                 for (const key in formDataObj) {
-                    // Kirim gambar hanya jika ada file baru (bukan string URL)
-                    if (key === 'image' && typeof formDataObj[key] === 'string') {
-                        continue;
-                    }
+                    if (key === 'image' && typeof formDataObj[key] === 'string') continue;
                     if (formDataObj[key] !== null) {
-                        formData.append(key, formDataObj[key]);
+                        const value = typeof formDataObj[key] === 'boolean' ? (formDataObj[key] ? 1 : 0) : formDataObj[key];
+                        formData.append(key, value);
                     }
                 }
 
