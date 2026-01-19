@@ -50,6 +50,69 @@ export const useProductStore = defineStore('product', {
             }
         },
 
+        // createFormData(formDataObj, isUpdate = false) {
+        //     const formData = new FormData();
+
+        //     if (isUpdate) {
+        //         formData.append('_method', 'PUT');
+        //     }
+
+        //     for (const key in formDataObj) {
+        //         const value = formDataObj[key];
+
+        //         // Skip jika null/undefined
+        //         if (value === null || value === undefined) continue;
+
+        //         // FIX IS_AVAILABLE: Konversi Explicit ke '1' atau '0'
+        //         if (key === 'is_available') {
+        //             formData.append(key, value ? '1' : '0');
+        //             continue;
+        //         }
+
+        //         // Handle Image
+        //         if (key === 'image') {
+        //             if (value instanceof File) {
+        //                 formData.append(key, value);
+        //             }
+        //             continue;
+        //         }
+
+        //         // Default
+        //         formData.append(key, value);
+        //     }
+        //     return formData;
+        // },
+
+        // async createProduct(formDataObj) {
+        //     try {
+        //         const formData = this.createFormData(formDataObj, false);
+        //         await apiClient.post('/admin/products', formData, {
+        //             headers: { 'Content-Type': 'multipart/form-data' }
+        //         });
+        //         await this.fetchProducts();
+        //         return true;
+        //     } catch (err) {
+        //         this.error = err.response?.data?.message || "Create Failed";
+        //         console.error("Create Error:", err.response?.data);
+        //         return false;
+        //     }
+        // },
+
+        // async updateProduct(id, formDataObj) {
+        //     try {
+        //         const formData = this.createFormData(formDataObj, true);
+        //         await apiClient.post(`/admin/products/${id}`, formData, {
+        //             headers: { 'Content-Type': 'multipart/form-data' }
+        //         });
+        //         await this.fetchProducts();
+        //         return true;
+        //     } catch (err) {
+        //         this.error = err.response?.data?.message || "Update Failed";
+        //         console.error("Update Error:", err.response?.data);
+        //         return false;
+        //     }
+        // },
+
         async createProduct(formDataObj) {
             try {
                 // Convert Object JS ke FormData

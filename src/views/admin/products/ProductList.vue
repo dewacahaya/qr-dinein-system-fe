@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue';
 import { useProductStore } from '@/stores/products';
-import { formatPrice } from '../../../../lib/utils';
+import { formatPrice, getImageUrl } from '../../../../lib/utils';
 
 import Sidebar from '@/components/admin/Sidebar.vue';
 import Header from '@/components/shared/Header.vue';
@@ -24,14 +24,14 @@ const form = reactive({
     description: '',
     price: '',
     image: null,
-    is_available: true
+    is_available: 1
 });
 
 const imagePreview = ref(null);
 
 const availabilityOptions = [
-    { label: 'Available', value: true },
-    { label: 'Not Available', value: false }
+    { label: 'Available', value: 1 },
+    { label: 'Not Available', value: 0 }
 ];
 
 // 1. Initial Data
@@ -59,45 +59,47 @@ const openAddModal = () => {
     form.description = '';
     form.price = '';
     form.image = null;
-    form.is_available = true;
+    form.is_available = 1;
     imagePreview.value = null;
-
     showModal.value = true;
 };
 
 const openEditModal = (product) => {
     isEditMode.value = true;
     form.id = product.id;
-    form.category_id = product.category_id;
+    form.category_id = product.category_id || product.category?.id || '';
     form.name = product.name;
     form.description = product.description;
     form.price = product.price;
-    form.is_available = product.is_available;
+    form.is_available = product.is_available ? 1 : 0;
 
-    imagePreview.value = product.image;
+    form.image = null;
+    imagePreview.value = getImageUrl(product.image);
     showModal.value = true;
 };
 
-// 5. Submit Form
 const handleSubmit = async () => {
     if (!form.name || !form.price || !form.category_id) {
-        return alert("Please fill in all the required fields. (Category, Name, Price)");
+        return alert("Please fill required fields (Name, Price, Category)");
     }
 
     let success = false;
+    const payload = { ...form };
+
     if (isEditMode.value) {
-        success = await productStore.updateProduct(form.id, { ...form });
+        success = await productStore.updateProduct(form.id, payload);
     } else {
-        success = await productStore.createProduct({ ...form });
+        success = await productStore.createProduct(payload);
     }
 
     if (success) {
         showModal.value = false;
-        alert(isEditMode.value ? 'Product successfully updated!' : 'Product successfully created!');
+        alert(isEditMode.value ? 'Product updated successfully!' : 'Product created successfully!');
+    } else {
+        alert(productStore.error || 'Operation failed');
     }
 };
 
-// 6. Delete Product
 const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
         await productStore.deleteProduct(id);
@@ -157,7 +159,7 @@ const handleDelete = async (id) => {
                                         <td class="px-6 py-4">
                                             <div
                                                 class="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
-                                                <img v-if="product.image" :src="product.image"
+                                                <img v-if="product.image" :src="getImageUrl(product.image)"
                                                     class="w-full h-full object-cover" alt="Menu" />
                                                 <span v-else class="text-xs text-gray-400">No img</span>
                                             </div>
@@ -173,7 +175,7 @@ const handleDelete = async (id) => {
                                         <!-- Category -->
                                         <td class="px-6 py-4">
                                             <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">
-                                                {{ product.category.name }}
+                                                {{ product.category?.name || "-" }}
                                             </span>
                                         </td>
 
@@ -235,7 +237,8 @@ const handleDelete = async (id) => {
                         class="w-full bg-[#F8F9FD] text-gray-900 text-sm font-bold rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-black transition-all border border-transparent resize-none placeholder:text-gray-300"></textarea>
                 </div>
 
-                <BaseInput type="number" v-model="form.price" label="Price (Rp)" placeholder="Example: 25000" required />
+                <BaseInput type="number" v-model="form.price" label="Price (Rp)" placeholder="Example: 25000"
+                    required />
                 <div v-if="isEditMode">
                     <BaseSelect label="Availability Status" v-model="form.is_available"
                         :options="availabilityOptions" />
