@@ -6,8 +6,9 @@ import BaseInput from '@/components/base/BaseInput.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
 
 const authStore = useAuthStore();
-
 const router = useRouter();
+
+const showPassword = ref(false);
 
 const form = ref({
     username: '',
@@ -15,8 +16,6 @@ const form = ref({
 });
 
 const handleLogin = async () => {
-    // Panggil action login dari store
-    // Redirect sudah dihandle otomatis di dalam store (redirectByRole)
     await authStore.login({
         username: form.value.username,
         password: form.value.password
@@ -63,20 +62,32 @@ const handleLogin = async () => {
                         <p class="text-gray-400 font-medium">Please login to start managing the shop.</p>
                     </div>
                     <form @submit.prevent="handleLogin" class="space-y-6">
-                        <!-- Email Input -->
                         <div>
-                            <BaseInput v-model="form.username" label="Username" placeholder="Example: Admin Cafe" required />
+                            <BaseInput v-model="form.username" label="Username" placeholder="Example: Admin Cafe"
+                                required />
                         </div>
 
-                        <!-- Password Input -->
                         <div>
-                            <BaseInput v-model="form.password" label="Password" placeholder="••••••••" type="password"
-                                required />
-                            <div class="flex justify-end mt-2">
-                                <a href="#"
-                                    class="text-xs font-bold text-gray-400 hover:text-black transition-colors">Forgot
-                                    Password?</a>
-                            </div>
+                            <BaseInput v-model="form.password" label="Password" placeholder="••••••••"
+                                :type="showPassword ? 'text' : 'password'" required>
+                                <template #append>
+                                    <button type="button" @click="showPassword = !showPassword"
+                                        class="focus:outline-none hover:text-gray-600 transition text-gray-400 flex items-center">
+                                        <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.59M5.753 5.753A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-1.574 2.59M9.88 9.88a3 3 0 104.24 4.24m-5.356-9.878l9.192 9.192" />
+                                        </svg>
+                                    </button>
+                                </template>
+                            </BaseInput>
                         </div>
 
                         <div v-if="authStore.error"

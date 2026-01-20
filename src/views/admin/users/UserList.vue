@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useUserStore } from '@/stores/user';
+import { getImageUrl } from '../../../../lib/utils';
 
 // Components
 import Sidebar from '@/components/admin/Sidebar.vue';
@@ -11,6 +12,9 @@ import BaseSelect from '@/components/base/BaseSelect.vue';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseCard from '@/components/base/BaseCard.vue';
 
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
+
 const userStore = useUserStore();
 const sidebarOpen = ref(false);
 const showModal = ref(false);
@@ -18,9 +22,11 @@ const isEditMode = ref(false);
 
 const form = reactive({
     id: null,
+    name: '',
     username: '',
     email: '',
     password: '',
+    password_confirmation: '',
     role: '',
     avatar: null
 });
@@ -35,27 +41,23 @@ const roleOptions = [
     { label: 'Kitchen', value: 'kitchen' }
 ];
 
-// 1. Initial Data
 onMounted(() => {
     userStore.fetchUsers();
 });
-
-// 2. Handle File Upload
-const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        imagePreview.value = URL.createObjectURL(file);
-        form.avatar = imagePreview.value;
-    }
-};
 
 // 3. Open Modal Add
 const openAddModal = () => {
     isEditMode.value = false;
     form.id = null;
+    form.name = '';
     form.username = '';
     form.email = '';
     form.password = '';
+    form.password_confirmation = '';
+
+    showPassword.value = false;
+    showConfirmPassword.value = false;
+
     form.role = '';
     form.avatar = null;
     imagePreview.value = null;
@@ -66,37 +68,50 @@ const openAddModal = () => {
 const openEditModal = (user) => {
     isEditMode.value = true;
     form.id = user.id;
+    form.name = user.name;
     form.username = user.username;
     form.email = user.email;
     form.role = user.role;
     form.password = '';
+    form.password_confirmation = '';
 
-    imagePreview.value = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`;
+    showPassword.value = false;
+    showConfirmPassword.value = false;
 
     showModal.value = true;
 };
 
 const handleSubmit = async () => {
-    if (!form.name || !form.email || !form.role) {
-        return alert("Please fill in Name, Email, and Role.");
+    if (!form.name || !form.username || !form.email || !form.role) {
+        return alert("Please fill in Name, Username, Email, and Role.");
     }
 
-    if (!isEditMode.value && !form.password) {
-        return alert("Password is required for new users.");
+    if (form.password && form.password !== form.password_confirmation) {
+        return alert("Password confirmation does not match.");
     }
 
     let success = false;
 
+    // Clone form agar aman
+    const payload = { ...form };
+
+    // Hapus password dari payload jika kosong saat edit (agar backend tidak update password jadi string kosong)
+    if (isEditMode.value && !payload.password) {
+        delete payload.password;
+        delete payload.password_confirmation;
+    }
+
     if (isEditMode.value) {
-        alert("Edit User feature is simulated.");
-        success = true;
+        success = await userStore.updateUser(form.id, payload);
     } else {
-        success = await userStore.createUser({ ...form });
+        success = await userStore.createUser(payload);
     }
 
     if (success) {
         showModal.value = false;
         alert(isEditMode.value ? 'User updated successfully!' : 'User created successfully!');
+    } else {
+        alert(userStore.error || 'Operation failed');
     }
 };
 
@@ -139,7 +154,8 @@ const handleDelete = async (id) => {
                                     class="bg-gray-50 text-gray-900 uppercase font-bold text-xs tracking-wider border-b border-gray-200">
                                     <tr>
                                         <th class="px-6 py-4">No</th>
-                                        <th class="px-6 py-4">Name</th>
+                                        <th class="px-6 py-4">Photo</th>
+                                        <th class="px-6 py-4">Username</th>
                                         <th class="px-6 py-4">Role</th>
                                         <th class="px-6 py-4 text-right">Actions</th>
                                     </tr>
@@ -157,6 +173,14 @@ const handleDelete = async (id) => {
                                         <!-- No -->
                                         <td class="px-6 py-4">
                                             {{ index + 1 }}
+                                        </td>
+
+                                        <td class="px-6 py-4">
+                                            <div
+                                                class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-gray-300 shrink-0">
+                                                <img :src="user.avatar ? getImageUrl(user.avatar) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
+                                                    class="w-full h-full object-cover" alt="Avatar" />
+                                            </div>
                                         </td>
 
                                         <!-- Name & Email -->
@@ -211,39 +235,74 @@ const handleDelete = async (id) => {
 
             <form @submit.prevent="handleSubmit" class="space-y-5">
 
+                <BaseInput v-model="form.name" label="Name" placeholder="e.g. johndoe123" required />
+
                 <BaseInput v-model="form.username" label="User Name" placeholder="e.g. John Doe" required />
 
                 <BaseInput v-model="form.email" label="Email Address" type="email" placeholder="e.g. john@glory.com"
                     required />
 
-                <BaseInput v-model="form.password" label="Password" type="password" placeholder="••••••••"
-                    :required="!isEditMode" />
-                <p v-if="isEditMode" class="text-[10px] text-gray-400 -mt-3 ml-1">*Leave blank if you don't want to
-                    change password</p>
+                <div class="space-y-5 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div>
+                        <BaseInput v-model="form.password" label="Password" :type="showPassword ? 'text' : 'password'"
+                            placeholder="••••••••" :required="!isEditMode">
+                            <template #append>
+                                <button type="button" @click="showPassword = !showPassword"
+                                    class="focus:outline-none hover:text-gray-600 transition">
+                                    <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.59M5.753 5.753A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-1.574 2.59M9.88 9.88a3 3 0 104.24 4.24m-5.356-9.878l9.192 9.192" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </BaseInput>
+                    </div>
+
+                    <div>
+                        <BaseInput v-model="form.password_confirmation" label="Confirm Password"
+                            :type="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••"
+                            :required="!isEditMode || form.password.length > 0">
+                            <template #append>
+                                <button type="button" @click="showConfirmPassword = !showConfirmPassword"
+                                    class="focus:outline-none hover:text-gray-600 transition">
+                                    <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.59M5.753 5.753A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-1.574 2.59M9.88 9.88a3 3 0 104.24 4.24m-5.356-9.878l9.192 9.192" />
+                                    </svg>
+                                </button>
+                            </template>
+                        </BaseInput>
+                    </div>
+                    <p v-if="isEditMode" class="text-[10px] text-gray-400 ml-1 italic">*Leave blank if you don't want to
+                        change password</p>
+                </div>
 
                 <BaseSelect label="User Role" v-model="form.role" :options="roleOptions" placeholder="Select Role"
                     required />
 
-                <!-- Image Upload with Preview -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Avatar /
-                        Photo</label>
-
-                    <div class="flex items-center gap-4">
-                        <!-- Preview Box -->
-                        <div
-                            class="w-16 h-16 bg-gray-100 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center shrink-0">
-                            <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover" />
-                            <span v-else class="text-[10px] text-gray-400">No Img</span>
-                        </div>
-
-                        <!-- Input File -->
-                        <label
-                            class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded-xl text-sm transition">
-                            <span>Choose File</span>
-                            <input type="file" class="hidden" accept="image/*" @change="handleFileUpload" />
-                        </label>
-                    </div>
+                <div class="bg-blue-50 text-blue-600 text-xs p-3 rounded-xl flex items-start gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>Profile picture will be generated automatically based on the name.</p>
                 </div>
 
                 <div class="flex gap-3 pt-6">

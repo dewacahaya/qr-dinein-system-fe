@@ -223,7 +223,7 @@ const handleDownload = () => {
                 <button @click="showResultModal = false"
                     class="flex-1 bg-gray-100 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition">Close</button>
                 <BaseButton @click="handleDownload" variant="secondary" class="flex-1 py-3.5 rounded-xl">
-                    Download .PNG
+                    Download
                 </BaseButton>
             </div>
         </div>
