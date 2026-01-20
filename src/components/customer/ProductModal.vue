@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { formatPrice } from '../../../lib/utils';
+import { formatPrice, getImageUrl } from '../../../lib/utils';
 import BaseModal from '../base/BaseModal.vue';
 import BaseButton from '../base/BaseButton.vue';
 
@@ -44,7 +44,7 @@ const handleDone = () => {
             </button>
             <div class="flex flex-col items-center text-center">
                 <div class="w-32 h-32 mb-4 bg-[#F8F9FD] rounded-full flex items-center justify-center relative">
-                    <img :src="product?.image" class="w-24 h-24 object-contain mix-blend-multiply relative z-10" />
+                    <img :src="getImageUrl(product?.image)" class="w-24 h-24 object-cover mix-blend-multiply relative z-10" />
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ product?.name }}</h3>
                 <p class="text-lg font-semibold text-gray-900 mb-4">{{ formatPrice(product?.price || 0) }}</p>

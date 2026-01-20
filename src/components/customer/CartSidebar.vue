@@ -1,6 +1,6 @@
 <script setup>
 import { useCartStore } from '@/stores/cart';
-import { formatPrice } from '../../../lib/utils';
+import { formatPrice, getImageUrl } from '../../../lib/utils';
 
 defineProps({});
 const emit = defineEmits(['open-checkout']);
@@ -43,7 +43,8 @@ const cartStore = useCartStore();
 
                 <!-- Image & Info -->
                 <div class="flex flex-col items-center text-center">
-                    <img :src="item.image" class="w-10 h-10 md:w-14 md:h-14 object-contain mix-blend-multiply mb-1" />
+                    <img :src="getImageUrl(item.image)"
+                        class="w-10 h-10 md:w-14 md:h-14 object-contain mix-blend-multiply mb-1" />
                     <h4 class="font-bold text-gray-900 text-[10px] md:text-sm leading-tight line-clamp-2 w-full">{{
                         item.name }}</h4>
                     <p class="text-[10px] md:text-xs text-gray-500 font-bold mt-1">{{ formatPrice(item.price) }}</p>

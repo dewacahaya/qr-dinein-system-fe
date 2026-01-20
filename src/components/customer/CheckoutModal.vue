@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useCartStore } from '@/stores/cart';
-import { formatPrice } from '../../../lib/utils';
+import { formatPrice, getImageUrl } from '../../../lib/utils';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseButton from '../base/BaseButton.vue';
 
@@ -39,7 +39,7 @@ const handlePayment = () => {
                     <div class="flex-1">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex gap-2 items-center">
-                                <img :src="item.image" class="w-12 h-12 object-contain" alt="menu image">
+                                <img :src="getImageUrl(item.image)" class="w-12 h-12 object-contain" alt="menu image">
                                 <div>
                                     <span class="font-bold text-sm text-gray-800 line-clamp-1">{{ item.name }}</span>
                                     <span class="font-bold text-sm">x{{ item.quantity }}</span>

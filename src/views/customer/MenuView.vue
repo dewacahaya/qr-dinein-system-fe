@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-// Relative Imports
-import apiClient from '../../../lib/axios';
-import { formatPrice } from '../../../lib/utils';
+import { formatPrice, getImageUrl } from '../../../lib/utils';
+import { useRoute } from 'vue-router';
 import { useCartStore } from '../../stores/cart';
+import { useCustomerStore } from '@/stores/customer';
 
 import BaseButton from '@/components/base/BaseButton.vue';
 import ProductModal from '@/components/customer/ProductModal.vue';
@@ -11,102 +11,50 @@ import CheckoutModal from '../../components/customer/CheckoutModal.vue';
 import CartSidebar from '../../components/customer/CartSidebar.vue';
 import BaseCard from '@/components/base/BaseCard.vue';
 
+const route = useRoute();
 const cartStore = useCartStore();
-const products = ref([]);
-const categories = ref([]);
+const customerStore = useCustomerStore();
+
 const activeCategory = ref('all');
 const loading = ref(true);
 
-// State UI
 const showProductModal = ref(false);
 const showCheckoutModal = ref(false);
 const selectedProduct = ref(null);
 
-// 1. Fetch Data dari Mock API saat component di-mount
 onMounted(async () => {
-    // Simulasi set Table ID dari URL (misal ?table_id=1)
-    const urlParams = new URLSearchParams(window.location.search);
-    const tableIdFromUrl = urlParams.get('table_id');
-    if (tableIdFromUrl) {
-        cartStore.setTableId(tableIdFromUrl);
-    } else if (!cartStore.tableId) {
-        cartStore.setTableId(1); // Default meja 1 jika tidak ada QR
-    }
-
-    try {
-        // Parallel Request biar cepat
-        const [resCat, resProd] = await Promise.all([
-            apiClient.get('/categories'),
-            apiClient.get('/products')
-        ]);
-
-        // Masukkan data dari wrapper 'data' milik API Resource
-        categories.value = resCat.data.data;
-        products.value = resProd.data.data;
-
-    } catch (err) {
-        console.error("Gagal mengambil data menu:", err);
-        alert("Gagal terhubung ke server. Pastikan Mock API jalan.");
-    } finally {
-        loading.value = false;
-    }
+    await customerStore.initData(route.query);
 });
 
-// Logic Buka Modal Detail
 const openProduct = (product) => {
     selectedProduct.value = product;
     showProductModal.value = true;
 };
 
-// Logic Tambah ke Cart (Disimpan ke Pinia)
 const addToCart = (item) => {
     cartStore.addToCart(item, item.quantity, item.notes);
-    // Tidak perlu alert, cukup visual feedback di Sidebar nanti
 };
 
-// Logic Checkout Akhir
 const handleCheckoutProcess = async () => {
     showCheckoutModal.value = false;
-
     try {
-        // Panggil action checkout di Store
         const result = await cartStore.checkout();
-
         if (result.snap_token) {
-            console.log("Snap Token diterima:", result.snap_token);
-
-            // --- INTEGRASI MIDTRANS SNAP ---
-            // Cek apakah script snap sudah dimuat di index.html
-            if (window.snap) {
-                window.snap.pay(result.snap_token, {
-                    onSuccess: function (result) {
-                        // Redirect ke halaman sukses
-                        cartStore.clearCart();
-                        window.location.href = '/order/success';
-                    },
-                    onPending: function (result) {
-                        alert("Menunggu pembayaran...");
-                    },
-                    onError: function (result) {
-                        alert("Pembayaran gagal!");
-                    },
-                    onClose: function () {
-                        alert('Anda menutup popup tanpa menyelesaikan pembayaran');
-                    }
-                });
-            } else {
-                alert("Simulasi: Popup Midtrans akan muncul disini. (Token: " + result.snap_token + ")");
-            }
+            console.log("Snap Token:", result.snap_token);
+            // Logic Midtrans nanti disini
+            alert("Simulasi: Popup Midtrans Muncul! (Token: " + result.snap_token + ")");
         }
-    } catch (error) {
-        alert("Gagal memproses pesanan. Cek console.");
+    } catch (e) {
+        alert("Gagal checkout. Cek koneksi.");
     }
 };
 
-// Filter Kategori
 const filteredProducts = computed(() => {
-    if (activeCategory.value === 'all') return products.value;
-    return products.value.filter(p => p.category_id === activeCategory.value);
+    if (activeCategory.value === 'all') return customerStore.products;
+    return customerStore.products.filter(p => {
+        const productCatId = p.category_id ?? p.category?.id;
+        return productCatId == activeCategory.value;
+    });
 });
 </script>
 
@@ -127,7 +75,7 @@ const filteredProducts = computed(() => {
                                 class="text-[14px] md:text-lg font-bold text-gray-400 tracking-widest">GloryCafe</span>
                         </div>
                         <div class="text-yellow-400 py-2 text-2xl md:text-4xl font-bold">
-                            Hey, Table {{ cartStore.tableId || '1' }}
+                            Hey, Table {{ customerStore.tableName }}
                         </div>
                         <h2 class="text-lg md:text-4xl font-semibold py-2 text-gray-900 leading-none tracking-tight">
                             Let's Order Our Menus
@@ -139,24 +87,33 @@ const filteredProducts = computed(() => {
             <!-- CATEGORY CHIPS -->
             <div class="px-5 md:px-10 py-4 shrink-0 bg-[#F8F9FD]">
                 <div class="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar pb-1">
+
+                    <!-- Tombol All -->
                     <BaseButton @click="activeCategory = 'all'"
                         :variant="activeCategory === 'all' ? 'primary' : 'outline'"
                         class="px-5 py-2.5 rounded-2xl text-[10px] md:text-sm whitespace-nowrap">
                         All Items
                     </BaseButton>
-                    <BaseButton v-for="cat in categories" :key="cat.id" @click="activeCategory = cat.id"
+
+                    <!-- Tombol Loop Categories dari Store -->
+                    <BaseButton v-for="cat in customerStore.categories" :key="cat.id" @click="activeCategory = cat.id"
                         :variant="activeCategory === cat.id ? 'primary' : 'outline'"
                         class="px-5 py-2.5 rounded-2xl text-[10px] md:text-sm whitespace-nowrap">
                         {{ cat.name }}
                     </BaseButton>
+
                 </div>
             </div>
 
             <!-- MENU GRID -->
             <div class="flex-1 overflow-y-auto px-5 md:px-10 pb-24 md:pb-10">
-                <div v-if="loading" class="py-20 text-center flex flex-col items-center gap-3">
+                <div v-if="customerStore.loading" class="py-20 text-center flex flex-col items-center gap-3">
                     <div class="w-6 h-6 border-2 border-gray-200 border-t-yellow-400 rounded-full animate-spin"></div>
                     <span class="text-xs text-gray-400 font-medium">Loading delicious menu...</span>
+                </div>
+
+                <div v-else-if="filteredProducts.length === 0" class="py-20 text-center text-gray-400">
+                    <p>No products found.</p>
                 </div>
 
                 <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
@@ -165,7 +122,7 @@ const filteredProducts = computed(() => {
                         <!-- Image Area -->
                         <div
                             class="aspect-square w-full bg-gray-50 rounded-2xl mb-3 flex items-center justify-center relative overflow-hidden shrink-0">
-                            <img :src="product.image"
+                            <img :src="getImageUrl(product.image)" alt="Menu Img"
                                 class="w-3/4 h-3/4 object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-110 drop-shadow-sm" />
                         </div>
 
