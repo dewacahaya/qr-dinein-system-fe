@@ -74,10 +74,13 @@ const handleGenerate = async () => {
 };
 
 const handleDownload = () => {
+    if (!tableStore.qrCodeBlobUrl) return;
     const link = document.createElement('a');
     link.href = tableStore.qrCodeBlobUrl;
-    link.download = `QR-Table-${selectedTable.value.table_number}.png`;
+    link.download = `QR-${selectedTable.value.table_number}.svg`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 };
 </script>
 
@@ -130,15 +133,15 @@ const handleDownload = () => {
                             <!-- Table Icon -->
                             <div
                                 class="w-24 h-24 mb-3 bg-gray-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                <img src="@/assets/images/table.png" alt="Table"
-                                    class="w-14 h-14 opacity-50" />
+                                <img src="@/assets/images/table.png" alt="Table" class="w-14 h-14 opacity-50" />
                             </div>
 
                             <!-- Info -->
                             <h3 class="text-lg font-black text-gray-900 mb-1">
                                 {{ table.table_number }}
                             </h3>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Tap to Generate QR</p>
+                            <p class="text-xs text-gray-400 text-center font-bold uppercase tracking-wider">Tap to
+                                Generate QR</p>
                         </BaseCard>
                     </div>
 
@@ -204,10 +207,16 @@ const handleDownload = () => {
             <p class="text-sm text-gray-500 mb-6">{{ selectedTable?.table_number }}</p>
 
             <!-- QR Image Container -->
-            <div class="p-4 bg-white border-2 border-gray-100 rounded-3xl shadow-sm mb-6">
-                <img v-if="tableStore.qrCodeBlobUrl" :src="tableStore.qrCodeBlobUrl" class="w-48 h-48 object-contain"
-                    alt="QR Code" />
-                <div v-else class="w-48 h-48 flex items-center justify-center text-gray-400 text-xs">Generating...</div>
+            <div
+                class="p-4 bg-white border-4 border-gray-100 rounded-3xl mb-6 relative flex items-center justify-center min-h-50 min-w-50">
+
+                <!-- RENDER SVG DISINI -->
+                <div v-if="tableStore.qrCodeSvg" v-html="tableStore.qrCodeSvg"
+                    class="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"></div>
+
+                <div v-else class="flex flex-col items-center justify-center text-gray-400 text-xs animate-pulse">
+                    Generating...
+                </div>
             </div>
 
             <div class="flex gap-3 w-full">

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
-import { useUserStore } from '@/stores/user'; // Use UserStore, not ProductStore
+import { useUserStore } from '@/stores/user';
 
 // Components
 import Sidebar from '@/components/admin/Sidebar.vue';
@@ -16,10 +16,9 @@ const sidebarOpen = ref(false);
 const showModal = ref(false);
 const isEditMode = ref(false);
 
-// Form State
 const form = reactive({
     id: null,
-    name: '',
+    username: '',
     email: '',
     password: '',
     role: '',
@@ -46,7 +45,7 @@ const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
         imagePreview.value = URL.createObjectURL(file);
-        form.avatar = imagePreview.value; // Store preview URL for mock
+        form.avatar = imagePreview.value;
     }
 };
 
@@ -54,9 +53,9 @@ const handleFileUpload = (event) => {
 const openAddModal = () => {
     isEditMode.value = false;
     form.id = null;
-    form.name = '';
+    form.username = '';
     form.email = '';
-    form.password = ''; // Reset password
+    form.password = '';
     form.role = '';
     form.avatar = null;
     imagePreview.value = null;
@@ -67,18 +66,16 @@ const openAddModal = () => {
 const openEditModal = (user) => {
     isEditMode.value = true;
     form.id = user.id;
-    form.name = user.name;
+    form.username = user.username;
     form.email = user.email;
     form.role = user.role;
-    form.password = ''; // Don't show old password
+    form.password = '';
 
-    // Check if avatar is URL or null
     imagePreview.value = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`;
 
     showModal.value = true;
 };
 
-// 5. Submit Form
 const handleSubmit = async () => {
     if (!form.name || !form.email || !form.role) {
         return alert("Please fill in Name, Email, and Role.");
@@ -91,8 +88,6 @@ const handleSubmit = async () => {
     let success = false;
 
     if (isEditMode.value) {
-        // Logic Update (Simulated since typically logic is similar to create in mock)
-        // Ideally: await userStore.updateUser(form.id, form);
         alert("Edit User feature is simulated.");
         success = true;
     } else {
@@ -105,7 +100,6 @@ const handleSubmit = async () => {
     }
 };
 
-// 6. Delete User
 const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this user?')) {
         await userStore.deleteUser(id);
@@ -165,18 +159,9 @@ const handleDelete = async (id) => {
                                             {{ index + 1 }}
                                         </td>
 
-                                        <!-- Avatar -->
-                                        <!-- <td class="px-6 py-4">
-                                            <div
-                                                class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-gray-300">
-                                                <img :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
-                                                    class="w-full h-full object-cover" alt="Avatar" />
-                                            </div>
-                                        </td> -->
-
                                         <!-- Name & Email -->
                                         <td class="px-6 py-4">
-                                            <p class="font-bold text-gray-900 text-sm">{{ user.name }}</p>
+                                            <p class="font-bold text-gray-900 text-sm">{{ user.username }}</p>
                                             <p class="text-xs text-gray-400">{{ user.email }}</p>
                                         </td>
 
@@ -193,12 +178,12 @@ const handleDelete = async (id) => {
                                         <!-- Actions -->
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-end gap-2">
-                                                <BaseButton variant="outline" @click="openEditModal(user)"
-                                                    class="px-3 py-1.5 text-xs rounded-lg">
+                                                <BaseButton variant="secondary" @click="openEditModal(user)"
+                                                    class="px-4 py-2 text-black rounded-lg transition">
                                                     Edit
                                                 </BaseButton>
                                                 <BaseButton variant="danger" @click="handleDelete(user.id)"
-                                                    class="px-3 py-1.5 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 shadow-none">
+                                                    class="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition">
                                                     Delete
                                                 </BaseButton>
                                             </div>
@@ -226,7 +211,7 @@ const handleDelete = async (id) => {
 
             <form @submit.prevent="handleSubmit" class="space-y-5">
 
-                <BaseInput v-model="form.name" label="Full Name" placeholder="e.g. John Doe" required />
+                <BaseInput v-model="form.username" label="User Name" placeholder="e.g. John Doe" required />
 
                 <BaseInput v-model="form.email" label="Email Address" type="email" placeholder="e.g. john@glory.com"
                     required />

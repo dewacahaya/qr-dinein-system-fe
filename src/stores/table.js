@@ -6,6 +6,7 @@ export const useTableStore = defineStore('table', {
         tables: [],
         loading: false,
         error: null,
+        qrCodeSvg: null,
         qrCodeBlobUrl: null,
     }),
 
@@ -16,6 +17,7 @@ export const useTableStore = defineStore('table', {
             try {
                 const response = await apiClient.get('/admin/tables');
                 this.tables = response.data.data || response.data;
+                this.tables.sort((a, b) => a.id - b.id);
             } catch (err) {
                 console.error("Error fetching tables:", err);
             } finally {
@@ -49,15 +51,25 @@ export const useTableStore = defineStore('table', {
         // --- GENERATE/DOWNLOAD QR ---
         async generateQr(id) {
             this.loading = true;
+            this.qrCodeSvg = null;
             this.qrCodeBlobUrl = null;
-            try {
-                // Kita request sebagai BLOB (Binary Large Object) karena ini gambar
-                const response = await apiClient.get(`/admin/tables/${id}/qr`, {
-                    responseType: 'blob'
-                });
 
-                // Buat URL lokal dari blob data agar bisa masuk src="" img
-                this.qrCodeBlobUrl = window.URL.createObjectURL(new Blob([response.data]));
+            try {
+                // 1. Request JSON biasa (HAPUS responseType: 'blob'/'text')
+                const response = await apiClient.get(`/admin/tables/${id}/qr`);
+
+                // 2. Ambil string SVG dari key JSON 'svg'
+                const svgString = response.data.svg;
+
+                if (!svgString) throw new Error("SVG not found in response");
+
+                // 3. Simpan ke State untuk v-html
+                this.qrCodeSvg = svgString;
+
+                // 4. Buat Blob untuk Download (Optional tapi bagus buat tombol download)
+                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                this.qrCodeBlobUrl = window.URL.createObjectURL(blob);
+
                 return true;
             } catch (err) {
                 console.error("Failed to generate QR", err);
