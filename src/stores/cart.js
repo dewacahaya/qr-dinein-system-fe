@@ -12,7 +12,6 @@ export const useCartStore = defineStore('cart', {
         totalPrice: (state) => {
             return state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
         },
-        // Menghitung Total Item
         totalItems: (state) => {
             return state.items.reduce((total, item) => total + item.quantity, 0);
         }
@@ -53,27 +52,36 @@ export const useCartStore = defineStore('cart', {
         },
 
         async checkout() {
-            if (!this.tableId) {
-                this.tableId = 1;
-            }
+            const finalTableId = this.tableId || 1;
+
+            const formattedItems = this.items.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                note: item.notes,
+                price: item.price
+            }));
 
             const payload = {
-                table_id: this.tableId,
-                customer_name: this.customerName,
-                items: this.items.map(item => ({
-                    product_id: item.id,
-                    qty: item.quantity,
-                    note: item.notes
-                }))
+                table_id: finalTableId,
+                customer_name: this.customerName || 'Guest',
+                total_amount: this.totalPrice,
+                items: formattedItems
             };
 
             try {
-                console.log("Sending Checkout:", payload);
+                console.log("📤 Sending Payload:", payload);
                 const response = await apiClient.post('/orders', payload);
-                return response.data;
+                const data = response.data.data || response.data;
+                return data;
 
             } catch (error) {
-                console.error("Checkout Gagal:", error);
+                if (error.response?.status === 422) {
+                    console.error("❌ Validation Error:", error.response.data.errors);
+                    alert("Gagal Checkout: " + JSON.stringify(error.response.data.errors));
+                } else {
+                    console.error("❌ Checkout Failed:", error);
+                    alert("Terjadi kesalahan sistem.");
+                }
                 throw error;
             }
         }

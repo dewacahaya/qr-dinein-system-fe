@@ -74,7 +74,11 @@ export const useCustomerStore = defineStore('customer', {
         async fetchProducts() {
             try {
                 const response = await apiClient.get('/products');
-                this.products = response.data.data;
+                const allProducts = response.data.data || response.data;
+
+                // --- LOGIC FILTER (Hanya Tampilkan yang Available) ---
+                // Kita gunakan '== 1' atau '== true' agar aman menangani angka/boolean dari BE
+                this.products = allProducts.filter(product => product.is_available == 1 || product.is_available === true);
             } catch (err) {
                 console.error("Fetch Products Error", err);
             }

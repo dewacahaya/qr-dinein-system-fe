@@ -16,7 +16,6 @@ const cartStore = useCartStore();
 const customerStore = useCustomerStore();
 
 const activeCategory = ref('all');
-const loading = ref(true);
 
 const showProductModal = ref(false);
 const showCheckoutModal = ref(false);
@@ -37,15 +36,42 @@ const addToCart = (item) => {
 
 const handleCheckoutProcess = async () => {
     showCheckoutModal.value = false;
+
     try {
         const result = await cartStore.checkout();
+
         if (result.snap_token) {
             console.log("Snap Token:", result.snap_token);
-            // Logic Midtrans nanti disini
-            alert("Simulasi: Popup Midtrans Muncul! (Token: " + result.snap_token + ")");
+
+            if (window.snap) {
+                window.snap.pay(result.snap_token, {
+                    onSuccess: function (result) {
+                        console.log("Payment Success!", result);
+                        cartStore.clearCart();
+                        window.location.href = '/order-status';
+                    },
+                    onPending: function (result) {
+                        alert("Menunggu pembayaran...");
+                        console.log(result);
+                    },
+                    onError: function (result) {
+                        alert("Pembayaran gagal!");
+                        console.log(result);
+                    },
+                    onClose: function () {
+                        alert('Anda menutup popup tanpa menyelesaikan pembayaran');
+                    }
+                });
+            } else {
+                console.error("Snap JS belum terload.");
+                alert("Gagal memuat sistem pembayaran. Refresh halaman.");
+            }
+        } else {
+            alert("Gagal mendapatkan token pembayaran.");
         }
     } catch (e) {
-        alert("Gagal checkout. Cek koneksi.");
+        console.error(e);
+        alert("Terjadi kesalahan saat checkout.");
     }
 };
 
@@ -95,7 +121,6 @@ const filteredProducts = computed(() => {
                         All Items
                     </BaseButton>
 
-                    <!-- Tombol Loop Categories dari Store -->
                     <BaseButton v-for="cat in customerStore.categories" :key="cat.id" @click="activeCategory = cat.id"
                         :variant="activeCategory === cat.id ? 'primary' : 'outline'"
                         class="px-5 py-2.5 rounded-2xl text-[10px] md:text-sm whitespace-nowrap">
