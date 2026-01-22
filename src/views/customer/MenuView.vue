@@ -36,42 +36,61 @@ const addToCart = (item) => {
 
 const handleCheckoutProcess = async () => {
     showCheckoutModal.value = false;
-
     try {
         const result = await cartStore.checkout();
 
-        if (result.snap_token) {
-            console.log("Snap Token:", result.snap_token);
+        // 2. Ambil Data dari Resource (sesuai OrderResource.php)
+        // Response Resource biasanya dibungkus 'data'
+        // Jika result.data ada isinya, pakai itu. Jika result langsung object, pakai result.
+        const orderData = result.data || result;
 
+        const orderId = orderData.id;       // <--- INI ID DARI ORDERRESOURCE
+        const snapToken = orderData.snap_token;
+
+        if (snapToken) {
             if (window.snap) {
-                window.snap.pay(result.snap_token, {
-                    onSuccess: function (result) {
-                        console.log("Payment Success!", result);
+                window.snap.pay(snapToken, {
+                    onSuccess: function (paymentResult) {
+                        console.log("Payment Success!", paymentResult);
                         cartStore.clearCart();
-                        window.location.href = '/order-status';
+
+                        // 3. REDIRECT MANUAL DENGAN ID
+                        if (orderId) {
+                            // Gunakan Vue Router agar SPA tidak reload
+                            // Import useRouter di atas: const router = useRouter();
+                            // router.push({ name: 'order-status', query: { order_id: orderId } });
+
+                            // Atau cara Window (sedikit kasar tapi pasti jalan):
+                            window.location.href = `/order-status?order_id=${orderId}`;
+                        } else {
+                            // Fallback jika ID entah kenapa undefined
+                            alert("Pembayaran berhasil! Silakan cek status pesanan.");
+                            window.location.href = '/order-status';
+                        }
                     },
                     onPending: function (result) {
-                        alert("Menunggu pembayaran...");
-                        console.log(result);
+                        // Pending biasanya juga dianggap "lanjut" untuk tracking VA
+                        cartStore.clearCart();
+                        if (orderId) window.location.href = `/order-status?order_id=${orderId}`;
                     },
                     onError: function (result) {
-                        alert("Pembayaran gagal!");
-                        console.log(result);
+                        alert("Pembayaran gagal! Silakan coba lagi.");
                     },
                     onClose: function () {
                         alert('Anda menutup popup tanpa menyelesaikan pembayaran');
                     }
                 });
             } else {
-                console.error("Snap JS belum terload.");
-                alert("Gagal memuat sistem pembayaran. Refresh halaman.");
+                alert("Gagal memuat sistem pembayaran. Cek koneksi internet.");
             }
         } else {
-            alert("Gagal mendapatkan token pembayaran.");
+            console.error("No Snap Token", result);
+            alert("Gagal membuat pesanan (Token tidak ada).");
         }
     } catch (e) {
-        console.error(e);
-        alert("Terjadi kesalahan saat checkout.");
+        console.error("Checkout Error:", e);
+        // Alert error spesifik jika ada (misal: "Barang X habis")
+        alert(e.response?.data?.message || "Gagal checkout.");
     }
 };
 
