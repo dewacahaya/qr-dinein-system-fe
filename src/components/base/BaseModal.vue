@@ -12,7 +12,7 @@ defineEmits(['close']);
             <!-- Backdrop (Dark Overlay) -->
             <div @click="$emit('close')"
                 class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fade-in"></div>
-            <div class="relative z-10 w-full max-w-sm sm:max-w-md animate-scale-up">
+            <div class="relative z-10 w-full max-w-md animate-scale-up">
                 <slot />
             </div>
 
