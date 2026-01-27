@@ -218,7 +218,7 @@ const handleProcessOrder = async () => {
                     </div>
                     <div class="text-right">
                         <span class="bg-gray-900 text-white font-bold px-3 py-1 rounded-lg text-sm block mb-1"> {{
-                            selectedOrder?.table_number }}
+                            selectedOrder?.table_number }} - {{ selectedOrder?.customer_name }}
                         </span>
                         <span class="text-xs text-gray-500">{{ formatTime(selectedOrder?.created_at) }}</span>
                     </div>

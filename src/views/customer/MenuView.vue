@@ -38,13 +38,9 @@ const handleCheckoutProcess = async () => {
     showCheckoutModal.value = false;
     try {
         const result = await cartStore.checkout();
-
-        // 2. Ambil Data dari Resource (sesuai OrderResource.php)
-        // Response Resource biasanya dibungkus 'data'
-        // Jika result.data ada isinya, pakai itu. Jika result langsung object, pakai result.
         const orderData = result.data || result;
 
-        const orderId = orderData.id;       // <--- INI ID DARI ORDERRESOURCE
+        const orderId = orderData.id;
         const snapToken = orderData.snap_token;
 
         if (snapToken) {
@@ -53,23 +49,14 @@ const handleCheckoutProcess = async () => {
                     onSuccess: function (paymentResult) {
                         console.log("Payment Success!", paymentResult);
                         cartStore.clearCart();
-
-                        // 3. REDIRECT MANUAL DENGAN ID
                         if (orderId) {
-                            // Gunakan Vue Router agar SPA tidak reload
-                            // Import useRouter di atas: const router = useRouter();
-                            // router.push({ name: 'order-status', query: { order_id: orderId } });
-
-                            // Atau cara Window (sedikit kasar tapi pasti jalan):
                             window.location.href = `/order-status?order_id=${orderId}`;
                         } else {
-                            // Fallback jika ID entah kenapa undefined
                             alert("Pembayaran berhasil! Silakan cek status pesanan.");
                             window.location.href = '/order-status';
                         }
                     },
                     onPending: function (result) {
-                        // Pending biasanya juga dianggap "lanjut" untuk tracking VA
                         cartStore.clearCart();
                         if (orderId) window.location.href = `/order-status?order_id=${orderId}`;
                     },
@@ -89,7 +76,6 @@ const handleCheckoutProcess = async () => {
         }
     } catch (e) {
         console.error("Checkout Error:", e);
-        // Alert error spesifik jika ada (misal: "Barang X habis")
         alert(e.response?.data?.message || "Gagal checkout.");
     }
 };

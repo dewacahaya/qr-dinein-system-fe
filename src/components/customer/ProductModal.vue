@@ -12,18 +12,18 @@ const props = defineProps({
 const emit = defineEmits(['close', 'add-to-cart']);
 
 const quantity = ref(1);
-const note = ref('');
+const notes = ref('');
 
 watch(() => props.product, () => {
     quantity.value = 1;
-    note.value = '';
+    notes.value = '';
 });
 
 const handleDone = () => {
     emit('add-to-cart', {
         ...props.product,
         quantity: quantity.value,
-        notes: note.value
+        notes: notes.value
     });
     emit('close');
 };
@@ -44,7 +44,8 @@ const handleDone = () => {
             </button>
             <div class="flex flex-col items-center text-center">
                 <div class="w-32 h-32 mb-4 bg-[#F8F9FD] rounded-full flex items-center justify-center relative">
-                    <img :src="getImageUrl(product?.image)" class="w-24 h-24 object-cover mix-blend-multiply relative z-10" />
+                    <img :src="getImageUrl(product?.image)"
+                        class="w-24 h-24 object-cover mix-blend-multiply relative z-10" />
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ product?.name }}</h3>
                 <p class="text-lg font-semibold text-gray-900 mb-4">{{ formatPrice(product?.price || 0) }}</p>
@@ -65,7 +66,7 @@ const handleDone = () => {
                 <div class="w-full mb-6 text-left">
                     <label class="text-[10px] font-bold text-gray-400 tracking-wider ml-1 mb-2 block">NOTES
                         (OPTIONAL)</label>
-                    <textarea v-model="note" placeholder="Example: less sugar please..."
+                    <textarea v-model="notes" placeholder="Example: less sugar please..."
                         class="w-full bg-[#F8F9FD] rounded-2xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none border-transparent transition-all placeholder:text-gray-300"
                         rows="2"></textarea>
                 </div>

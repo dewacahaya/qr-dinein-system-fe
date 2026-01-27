@@ -57,7 +57,7 @@ export const useCartStore = defineStore('cart', {
             const formattedItems = this.items.map(item => ({
                 product_id: item.id,
                 quantity: item.quantity,
-                note: item.notes,
+                notes: item.notes,
                 price: item.price
             }));
 
