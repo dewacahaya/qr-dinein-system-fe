@@ -5,7 +5,6 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -21,16 +20,8 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     proxy: {
-      // '/api': {
-      //   target: 'http://localhost:8000',
-      //   changeOrigin: true,
-      //   headers: {
-      //     Accept: "application/json",
-      //     "Content-Type": "application/json",
-      //   },
-      // },
       '/api': {
-        target: 'https://abbded0cdab9.ngrok-free.app',
+        target: 'https://aaa37fce69f3.ngrok-free.app',
         changeOrigin: true,
         secure: false,
         headers: {

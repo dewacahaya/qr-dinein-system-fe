@@ -28,20 +28,15 @@ export const useUserStore = defineStore('user', {
             for (const key in formObj) {
                 const value = formObj[key];
 
-                // Skip avatar handling inside loop to handle it specifically below
                 if (key === 'avatar') continue;
 
                 if (value === null || value === undefined) continue;
                 formData.append(key, value);
             }
 
-            // Handle Avatar Logic
             if (formObj.avatar instanceof File) {
-                // Jika user upload file, kirim file
                 formData.append('avatar', formObj.avatar);
             } else if (!isUpdate) {
-                // Jika CREATE dan tidak ada file, generate URL random (Dicebear)
-                // Agar profile tidak kosong di header/list
                 const seed = formObj.username || Math.random().toString(36).substring(7);
                 const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
                 formData.append('avatar', randomAvatar);
@@ -59,7 +54,6 @@ export const useUserStore = defineStore('user', {
                 await this.fetchUsers();
                 return true;
             } catch (err) {
-                // Tampilkan pesan error validasi jika ada
                 const msg = err.response?.data?.message || "Failed to create user.";
                 console.error("Create User Error:", err.response?.data);
                 this.error = msg;
@@ -79,22 +73,6 @@ export const useUserStore = defineStore('user', {
             }
         },
 
-        // async createUser(formDataObj) {
-        //     try {
-        //         const formData = new FormData();
-        //         for (const key in formDataObj) {
-        //             if (formDataObj[key] !== null) formData.append(key, formDataObj[key]);
-        //         }
-        //         await apiClient.post('/admin/users', formData); // Backend harus support multipart
-        //         await this.fetchUsers();
-        //         return true;
-        //     } catch (err) {
-        //         this.error = err.response?.data?.message || "Failed create user";
-        //         return false;
-        //     }
-        // },
-
-        // ... Implement update & delete similar to product ...
         async deleteUser(id) {
             try {
                 await apiClient.delete(`/admin/users/${id}`);

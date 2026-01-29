@@ -11,7 +11,6 @@ export const useTableStore = defineStore('table', {
     }),
 
     actions: {
-        // --- FETCH TABLES ---
         async fetchTables() {
             this.loading = true;
             try {
@@ -37,7 +36,6 @@ export const useTableStore = defineStore('table', {
             }
         },
 
-        // --- DELETE TABLE ---
         async deleteTable(id) {
             try {
                 await apiClient.delete(`/admin/tables/${id}`);
@@ -48,25 +46,18 @@ export const useTableStore = defineStore('table', {
             }
         },
 
-        // --- GENERATE/DOWNLOAD QR ---
         async generateQr(id) {
             this.loading = true;
             this.qrCodeSvg = null;
             this.qrCodeBlobUrl = null;
 
             try {
-                // 1. Request JSON biasa (HAPUS responseType: 'blob'/'text')
                 const response = await apiClient.get(`/admin/tables/${id}/qr`);
-
-                // 2. Ambil string SVG dari key JSON 'svg'
                 const svgString = response.data.svg;
 
                 if (!svgString) throw new Error("SVG not found in response");
-
-                // 3. Simpan ke State untuk v-html
                 this.qrCodeSvg = svgString;
 
-                // 4. Buat Blob untuk Download (Optional tapi bagus buat tombol download)
                 const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
                 this.qrCodeBlobUrl = window.URL.createObjectURL(blob);
 

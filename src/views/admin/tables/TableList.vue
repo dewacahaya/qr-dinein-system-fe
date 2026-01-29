@@ -62,7 +62,6 @@ const openGenerateModal = (table) => {
 const handleGenerate = async () => {
     if (!selectedTable.value) return;
 
-    // Panggil store untuk fetch blob QR
     const success = await tableStore.generateQr(selectedTable.value.id);
 
     if (success) {
@@ -172,7 +171,6 @@ const handleDownload = () => {
         </div>
     </BaseModal>
 
-    <!-- 2. MODAL GENERATE CONFIRM -->
     <BaseModal :isOpen="showGenerateModal" @close="showGenerateModal = false">
         <div class="bg-white w-full rounded-4xl p-8 shadow-2xl text-center">
             <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -200,17 +198,15 @@ const handleDownload = () => {
         </div>
     </BaseModal>
 
-    <!-- 3. MODAL RESULT (QR DISPLAY) -->
+
     <BaseModal :isOpen="showResultModal" @close="showResultModal = false">
         <div class="bg-white w-full rounded-4xl p-8 shadow-2xl flex flex-col items-center text-center">
             <h2 class="text-xl font-black text-gray-900 mb-1">QR Code Ready!</h2>
             <p class="text-sm text-gray-500 mb-6">{{ selectedTable?.table_number }}</p>
 
-            <!-- QR Image Container -->
             <div
                 class="p-4 bg-white border-4 border-gray-100 rounded-3xl mb-6 relative flex items-center justify-center min-h-50 min-w-50">
 
-                <!-- RENDER SVG DISINI -->
                 <div v-if="tableStore.qrCodeSvg" v-html="tableStore.qrCodeSvg"
                     class="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"></div>
 

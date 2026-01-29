@@ -38,8 +38,6 @@ export const useCustomerStore = defineStore('customer', {
         // --- LOGIC TABLE ---
         async resolveTableLogic(query) {
             const cartStore = useCartStore();
-
-            // Skenario A: Scan QR Asli (UUID)
             if (query.uuid) {
                 try {
                     const { data } = await apiClient.get(`/tables/resolve/${query.uuid}`);
@@ -50,12 +48,10 @@ export const useCustomerStore = defineStore('customer', {
                     this.table = { table_number: 'Invalid QR' };
                 }
             }
-            // Skenario B: Manual/Dev (Table ID)
             else if (query.table_id) {
                 this.table = { id: query.table_id, table_number: `Table ${query.table_id}` };
                 cartStore.setTableId(query.table_id);
             }
-            // Skenario C: Tanpa Meja
             else {
                 this.table = { table_number: 'No Table' };
             }
@@ -76,8 +72,6 @@ export const useCustomerStore = defineStore('customer', {
                 const response = await apiClient.get('/products');
                 const allProducts = response.data.data || response.data;
 
-                // --- LOGIC FILTER (Hanya Tampilkan yang Available) ---
-                // Kita gunakan '== 1' atau '== true' agar aman menangani angka/boolean dari BE
                 this.products = allProducts.filter(product => product.is_available == 1 || product.is_available === true);
             } catch (err) {
                 console.error("Fetch Products Error", err);
