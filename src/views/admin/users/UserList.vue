@@ -63,7 +63,7 @@ const openAddModal = () => {
 
 const openEditModal = (user) => {
     isEditMode.value = true;
-    form.id = user.id;
+    form.id = Number(user.id);
     form.name = user.name;
     form.username = user.username;
     form.email = user.email;

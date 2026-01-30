@@ -31,6 +31,8 @@ export const useUserStore = defineStore('user', {
 
                 if (key === 'avatar') continue;
 
+                if (key === 'id') continue;
+
                 if ((key === 'password' || key === 'password_confirmation') && !value) {
                     continue;
                 }
@@ -68,7 +70,8 @@ export const useUserStore = defineStore('user', {
         async updateUser(id, formObj) {
             try {
                 const formData = this.createFormData(formObj, true);
-                await apiClient.post(`/admin/users/${id}`, formData);
+                const intId = parseInt(id);
+                await apiClient.post(`/admin/users/${intId}`, formData);
                 await this.fetchUsers();
                 return true;
             } catch (err) {
