@@ -31,12 +31,9 @@ const form = reactive({
     avatar: null
 });
 
-// Preview Image State
 const imagePreview = ref(null);
 
-// Role Options
 const roleOptions = [
-    { label: 'Admin', value: 'admin' },
     { label: 'Cashier', value: 'cashier' },
     { label: 'Kitchen', value: 'kitchen' }
 ];
@@ -64,7 +61,6 @@ const openAddModal = () => {
     showModal.value = true;
 };
 
-// 4. Open Modal Edit
 const openEditModal = (user) => {
     isEditMode.value = true;
     form.id = user.id;
@@ -91,11 +87,8 @@ const handleSubmit = async () => {
     }
 
     let success = false;
-
-    // Clone form agar aman
     const payload = { ...form };
 
-    // Hapus password dari payload jika kosong saat edit (agar backend tidak update password jadi string kosong)
     if (isEditMode.value && !payload.password) {
         delete payload.password;
         delete payload.password_confirmation;
@@ -124,18 +117,12 @@ const handleDelete = async (id) => {
 
 <template>
     <div class="flex h-screen overflow-hidden bg-gray-100 font-sans text-gray-900">
-
-        <!-- Sidebar -->
         <Sidebar :sidebar-open="sidebarOpen" @close-sidebar="sidebarOpen = false" />
-
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-            <!-- Header -->
             <Header :sidebar-open="sidebarOpen" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
-
             <main>
                 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
-                    <!-- Page Header -->
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                         <div>
                             <h1 class="text-2xl font-bold text-gray-900">Manage Users</h1>
@@ -146,7 +133,6 @@ const handleDelete = async (id) => {
                         </BaseButton>
                     </div>
 
-                    <!-- Table Container -->
                     <BaseCard :no-padding="true" class="overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-gray-600">

@@ -26,7 +26,8 @@ export const useKitchenStore = defineStore('kitchen', {
             this.loading = true;
             try {
                 const response = await apiClient.get('/orders/kitchen');
-                this.orders = response.data.data || [];
+                let data = response.data.data || [];
+                this.orders = data.sort((a, b) => a.id - b.id);
                 console.log("🔥 FETCHED ORDERS:", this.orders);
             } catch (err) {
                 console.error("Fetch Kitchen Orders Error:", err);
@@ -84,7 +85,7 @@ export const useKitchenStore = defineStore('kitchen', {
                 this.orders.splice(index, 1, mergedOrder);
             } else {
                 if (newOrder.payment_status === 'paid') {
-                    this.orders.unshift(newOrder);
+                    this.orders.push(newOrder);
                     this.playNotification();
                 }
             }

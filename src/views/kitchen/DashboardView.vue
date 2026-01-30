@@ -130,9 +130,6 @@ const handleProcessOrder = async () => {
                                                     class="font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded text-xs">x{{
                                                         order.items[0].qty || order.items[0].quantity }}</span>
                                             </div>
-                                            <!-- <p v-if="getItemNotes(order.items[0])"
-                                                class="text-[10px] text-red-500 font-bold truncate mt-0.5">Note: {{
-                                                    getItemNotes(order.items[0]) }}</p> -->
                                             <p v-if="getItemNotes(order.items[0])"
                                                 class="mt-2 text-xs text-gray-400 inline-block">
                                                 Note: <span class="text-red-600 font-semibold">{{

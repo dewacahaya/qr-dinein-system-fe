@@ -28,7 +28,10 @@ const openDetail = (order) => {
 
 const formatTime = (dateString) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return new Date(dateString).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
 
 const getItemName = (item) => {
@@ -54,6 +57,14 @@ const handleCompleteOrder = async () => {
     await cashierStore.updateStatus(selectedOrder.value.id, 'completed');
     showModal.value = false;
 };
+
+const handleDeleteOrder = async () => {
+    if (!selectedOrder.value) return;
+    if (confirm("Are you sure you want to delete this order?")) {
+        await cashierStore.deleteOrder(selectedOrder.value.id);
+        showModal.value = false;
+    }
+};
 </script>
 
 <template>
@@ -75,7 +86,7 @@ const handleCompleteOrder = async () => {
                     <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
                         <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                         <span class="text-sm font-bold text-gray-600">Active Orders: {{ cashierStore.activeOrders.length
-                        }}</span>
+                            }}</span>
                     </div>
                 </div>
             </div>
@@ -93,17 +104,15 @@ const handleCompleteOrder = async () => {
                         :hover="true" :no-padding="true"
                         class="cursor-pointer border-l-4 p-5 relative overflow-hidden bg-white"
                         :class="order.payment_status === 'paid' ? 'border-l-green-500' : 'border-l-orange-500'">
-                        <!-- Status Badge -->
                         <div class="absolute top-4 right-4 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wide"
                             :class="order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'">
-                            {{ order.payment_status }}
+                            {{ order.payment_status }} - {{ formatTime(order.created_at) }}
                         </div>
 
                         <div class="mb-4 pr-16">
                             <h3 class="font-black text-2xl text-gray-900">#{{ order.id }}</h3>
                             <p class="text-sm font-bold text-gray-500">{{ order.table_number }} - {{
                                 order.customer_name }}</p>
-                            <p class="text-xs text-gray-400 mt-1">{{ formatTime(order.created_at) }}</p>
                         </div>
 
                         <!-- Preview Items -->
@@ -117,7 +126,7 @@ const handleCompleteOrder = async () => {
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-center">
                                         <span class="font-bold text-gray-800 text-sm truncate">{{ getItemName(item)
-                                        }}</span>
+                                            }}</span>
                                         <span
                                             class="font-black text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded text-xs">x{{
                                                 item.qty || item.quantity }}</span>
@@ -157,13 +166,13 @@ const handleCompleteOrder = async () => {
                         <h2 class="text-4xl font-black text-gray-900">#{{ selectedOrder?.id }}</h2>
                         <span class="text-sm font-bold"
                             :class="selectedOrder?.payment_status === 'paid' ? 'text-green-600' : 'text-orange-500'">
-                            Status: {{ selectedOrder?.payment_status?.toUpperCase() }} • {{
+                            Status: {{ selectedOrder?.payment_status?.toUpperCase() }} - {{
                                 selectedOrder?.status?.toUpperCase() }}
                         </span>
                     </div>
                     <div class="text-right">
                         <span class="bg-gray-900 text-white font-bold px-3 py-1 rounded-lg text-sm block mb-1">
-                            {{ selectedOrder?.table_number }}
+                            {{ selectedOrder?.table_number }} - {{ formatTime(selectedOrder?.created_at) }}
                         </span>
                         <span class="text-sm font-bold text-gray-600">{{ selectedOrder?.customer_name }}</span>
                     </div>
@@ -224,9 +233,14 @@ const handleCompleteOrder = async () => {
                         Complete Order
                     </BaseButton>
 
-                    <BaseButton v-else disabled
+                    <BaseButton v-else-if="selectedOrder?.status === 'preparing'" disabled
                         class="flex-2 py-4 rounded-xl text-lg bg-gray-300 text-gray-500 cursor-not-allowed">
                         Cooking in Progress...
+                    </BaseButton>
+
+                    <BaseButton v-else-if="selectedOrder?.status === 'pending'" disabled
+                        class="flex-2 py-4 rounded-xl text-lg bg-gray-300 text-gray-500 cursor-not-allowed">
+                        Waiting Kitchen...
                     </BaseButton>
                 </div>
 

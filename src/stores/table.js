@@ -6,7 +6,7 @@ export const useTableStore = defineStore('table', {
         tables: [],
         loading: false,
         error: null,
-        qrCodeSvg: null,
+        // qrCodeSvg: null,
         qrCodeBlobUrl: null,
     }),
 
@@ -48,19 +48,30 @@ export const useTableStore = defineStore('table', {
 
         async generateQr(id) {
             this.loading = true;
-            this.qrCodeSvg = null;
+            if (this.qrCodeBlobUrl && this.qrCodeBlobUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(this.qrCodeBlobUrl);
+            }
             this.qrCodeBlobUrl = null;
 
             try {
-                const response = await apiClient.get(`/admin/tables/${id}/qr`);
-                const svgString = response.data.svg;
+                const response = await apiClient.get(`/admin/tables/${id}/qr`, {
+                    responseType: 'blob'
+                });
 
-                if (!svgString) throw new Error("SVG not found in response");
-                this.qrCodeSvg = svgString;
+                if (response.data.type === 'application/json') {
+                    const textData = await response.data.text();
+                    const json = JSON.parse(textData);
 
-                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-                this.qrCodeBlobUrl = window.URL.createObjectURL(blob);
-
+                    if (json.qr_code) {
+                        const res = await fetch(json.qr_code);
+                        const blob = await res.blob();
+                        this.qrCodeBlobUrl = window.URL.createObjectURL(blob);
+                    } else {
+                        throw new Error("QR Code field missing in JSON");
+                    }
+                } else {
+                    this.qrCodeBlobUrl = window.URL.createObjectURL(response.data);
+                }
                 return true;
             } catch (err) {
                 console.error("Failed to generate QR", err);

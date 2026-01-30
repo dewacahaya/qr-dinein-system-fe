@@ -13,7 +13,8 @@ export const useUserStore = defineStore('user', {
             this.loading = true;
             try {
                 const response = await apiClient.get('/admin/users');
-                this.users = response.data.data || response.data;
+                let data = response.data.data || response.data;
+                this.users = data.sort((a, b) => a.id - b.id);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -29,6 +30,10 @@ export const useUserStore = defineStore('user', {
                 const value = formObj[key];
 
                 if (key === 'avatar') continue;
+
+                if ((key === 'password' || key === 'password_confirmation') && !value) {
+                    continue;
+                }
 
                 if (value === null || value === undefined) continue;
                 formData.append(key, value);
@@ -50,7 +55,6 @@ export const useUserStore = defineStore('user', {
                 const formData = this.createFormData(formObj, false);
 
                 await apiClient.post('/admin/users', formData);
-
                 await this.fetchUsers();
                 return true;
             } catch (err) {

@@ -21,16 +21,20 @@ const activeCategory = ref('all');
 const showProductModal = ref(false);
 const showCheckoutModal = ref(false);
 const selectedProduct = ref(null);
+const loading = ref(false);
 
 onMounted(async () => {
     const pendingOrder = localStorage.getItem('pending_order_id');
     if (pendingOrder) {
         localStorage.removeItem('pending_order_id');
+        cartStore.clearCart();
         router.push(`/order-status?order_id=${pendingOrder}`);
         return;
     }
 
+    loading.value = true;
     await customerStore.initData(route.query);
+    loading.value = false;
 });
 
 const openProduct = (product) => {

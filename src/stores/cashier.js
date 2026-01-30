@@ -110,6 +110,16 @@ export const useCashierStore = defineStore('cashier', {
             }
         },
 
+        async deleteOrder(orderId) {
+            try {
+                this.orders = this.orders.filter(o => o.id !== orderId);
+                await apiClient.patch(`/orders/${orderId}/status`);
+            } catch (err) {
+                console.error("Delete failed", err);
+                this.fetchOrders();
+            }
+        },
+
         playNotification() {
             try {
                 const audio = new Audio(notifSound);

@@ -13,12 +13,10 @@ import BaseCard from '@/components/base/BaseCard.vue';
 const tableStore = useTableStore();
 const sidebarOpen = ref(false);
 
-// State Modals
 const showAddModal = ref(false);
 const showGenerateModal = ref(false);
 const showResultModal = ref(false);
 
-// Form State
 const form = reactive({
     table_number: '',
 });
@@ -76,7 +74,7 @@ const handleDownload = () => {
     if (!tableStore.qrCodeBlobUrl) return;
     const link = document.createElement('a');
     link.href = tableStore.qrCodeBlobUrl;
-    link.download = `QR-${selectedTable.value.table_number}.svg`;
+    link.download = `QR-${selectedTable.value.table_number}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -96,7 +94,6 @@ const handleDownload = () => {
             <main>
                 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
-                    <!-- Page Header -->
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                         <div>
                             <h1 class="text-2xl font-bold text-gray-900">Manage Tables</h1>
@@ -107,18 +104,14 @@ const handleDownload = () => {
                         </BaseButton>
                     </div>
 
-                    <!-- Table Grid -->
                     <div v-if="tableStore.loading" class="text-center py-20 text-gray-500">Loading tables...</div>
-
                     <div v-else-if="tableStore.tables.length === 0" class="text-center py-20 text-gray-400">
                         No tables found. Add one to start.
                     </div>
-
                     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         <BaseCard v-for="table in tableStore.tables" :key="table.id" :hover="true" :no-padding="true"
                             class="group relative flex flex-col items-center p-4 transition-all"
                             @click="openGenerateModal(table)">
-                            <!-- Delete Button (Top Right) -->
                             <button @click.stop="handleDelete(table.id)"
                                 class="absolute top-2 right-2 p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:bg-red-100 hover:text-red-500 transition z-10"
                                 title="Delete Table">
@@ -129,13 +122,11 @@ const handleDownload = () => {
                                 </svg>
                             </button>
 
-                            <!-- Table Icon -->
                             <div
                                 class="w-24 h-24 mb-3 bg-gray-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <img src="@/assets/images/table.png" alt="Table" class="w-14 h-14 opacity-50" />
                             </div>
 
-                            <!-- Info -->
                             <h3 class="text-lg font-black text-gray-900 mb-1">
                                 {{ table.table_number }}
                             </h3>
@@ -206,10 +197,8 @@ const handleDownload = () => {
 
             <div
                 class="p-4 bg-white border-4 border-gray-100 rounded-3xl mb-6 relative flex items-center justify-center min-h-50 min-w-50">
-
-                <div v-if="tableStore.qrCodeSvg" v-html="tableStore.qrCodeSvg"
-                    class="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"></div>
-
+                <img v-if="tableStore.qrCodeBlobUrl" :src="tableStore.qrCodeBlobUrl"
+                    class="w-48 h-48 object-contain mix-blend-multiply" alt="QR Code" />
                 <div v-else class="flex flex-col items-center justify-center text-gray-400 text-xs animate-pulse">
                     Generating...
                 </div>
