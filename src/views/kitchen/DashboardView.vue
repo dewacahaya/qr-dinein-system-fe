@@ -41,7 +41,8 @@ const formatTime = (dateString) => {
 
 const getItemName = (item) => {
     if (item.product && item.product.name) return item.product.name;
-    return item.name || 'Unknown Item';
+    if (item.product_name) return item.product_name;
+    if (item.name) return item.name;
 };
 
 const getItemImage = (item) => {
@@ -129,9 +130,14 @@ const handleProcessOrder = async () => {
                                                     class="font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded text-xs">x{{
                                                         order.items[0].qty || order.items[0].quantity }}</span>
                                             </div>
-                                            <p v-if="getItemNotes(order.items[0])"
+                                            <!-- <p v-if="getItemNotes(order.items[0])"
                                                 class="text-[10px] text-red-500 font-bold truncate mt-0.5">Note: {{
-                                                    getItemNotes(order.items[0]) }}</p>
+                                                    getItemNotes(order.items[0]) }}</p> -->
+                                            <p v-if="getItemNotes(order.items[0])"
+                                                class="mt-2 text-xs text-gray-400 inline-block">
+                                                Note: <span class="text-red-600 font-semibold">{{
+                                                    getItemNotes(order.items[0]) }}</span>
+                                            </p>
                                         </div>
                                     </div>
                                     <div v-if="order.items.length > 1"
@@ -191,8 +197,10 @@ const handleProcessOrder = async () => {
                                                     order.items[0].qty || order.items[0].quantity }}</span>
                                         </div>
                                         <p v-if="getItemNotes(order.items[0])"
-                                            class="text-[10px] text-red-500 font-bold truncate mt-0.5">Note: {{
-                                                getItemNotes(order.items[0]) }}</p>
+                                            class="mt-2 text-xs text-gray-400 inline-block">
+                                            Note: <span class="text-red-600 font-semibold">{{
+                                                getItemNotes(order.items[0]) }}</span>
+                                        </p>
                                     </div>
                                 </div>
 
@@ -246,9 +254,9 @@ const handleProcessOrder = async () => {
                                     {{ item.qty || item.quantity }}x
                                 </span>
                             </div>
-                            <p v-if="getItemNotes(item)"
-                                class="mt-2 text-sm font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg inline-block border border-red-100">
-                                Note: {{ getItemNotes(item) }}
+                            <p v-if="getItemNotes(item)" class="mt-2 text-sm text-gray-400 inline-block">
+                                Note: <span class="bg-red-100 px-2 py-1 rounded-lg text-red-600 font-semibold">{{
+                                    getItemNotes(item) }}</span>
                             </p>
                         </div>
                     </div>

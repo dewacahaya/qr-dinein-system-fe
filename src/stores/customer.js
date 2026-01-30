@@ -35,12 +35,12 @@ export const useCustomerStore = defineStore('customer', {
             }
         },
 
-        // --- LOGIC TABLE ---
         async resolveTableLogic(query) {
             const cartStore = useCartStore();
-            if (query.uuid) {
+            const uuid = query.uuid || query.table_uuid;
+            if (uuid) {
                 try {
-                    const { data } = await apiClient.get(`/tables/resolve/${query.uuid}`);
+                    const { data } = await apiClient.get(`/tables/resolve/${uuid}`);
                     this.table = data;
                     cartStore.setTableId(data.id);
                 } catch (e) {

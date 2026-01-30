@@ -10,6 +10,7 @@ import ProductModal from '@/components/customer/ProductModal.vue';
 import CheckoutModal from '../../components/customer/CheckoutModal.vue';
 import CartSidebar from '../../components/customer/CartSidebar.vue';
 import BaseCard from '@/components/base/BaseCard.vue';
+import router from '@/router/routes';
 
 const route = useRoute();
 const cartStore = useCartStore();
@@ -22,6 +23,13 @@ const showCheckoutModal = ref(false);
 const selectedProduct = ref(null);
 
 onMounted(async () => {
+    const pendingOrder = localStorage.getItem('pending_order_id');
+    if (pendingOrder) {
+        localStorage.removeItem('pending_order_id');
+        router.push(`/order-status?order_id=${pendingOrder}`);
+        return;
+    }
+
     await customerStore.initData(route.query);
 });
 
@@ -38,41 +46,42 @@ const handleCheckoutProcess = async () => {
     showCheckoutModal.value = false;
     try {
         const result = await cartStore.checkout();
-        const orderData = result.data || result;
 
-        const orderId = orderData.id;
-        const snapToken = orderData.snap_token;
+        const orderId = result.id || result.data?.id;
+        const snapToken = result.snap_token || result.token;
 
         if (snapToken) {
+            if (orderId) {
+                localStorage.setItem('pending_order_id', orderId);
+            }
             if (window.snap) {
                 window.snap.pay(snapToken, {
-                    onSuccess: function (paymentResult) {
-                        console.log("Payment Success!", paymentResult);
+                    onSuccess: function (result) {
+                        console.log("Payment Success!", result);
                         cartStore.clearCart();
-                        if (orderId) {
-                            window.location.href = `/order-status?order_id=${orderId}`;
-                        } else {
-                            alert("Pembayaran berhasil! Silakan cek status pesanan.");
-                            window.location.href = '/order-status';
-                        }
+                        localStorage.removeItem('pending_order_id');
+                        router.push(`/order-status?order_id=${orderId}`);
                     },
                     onPending: function (result) {
+                        console.log("Pending payment: ", result)
                         cartStore.clearCart();
-                        if (orderId) window.location.href = `/order-status?order_id=${orderId}`;
+                        localStorage.removeItem('pending_order_id');
+                        router.push(`/order-status?order_id=${orderId}`);
                     },
                     onError: function (result) {
-                        alert("Pembayaran gagal! Silakan coba lagi.");
+                        console.error("Payment Error", result);
+                        alert("Payment failed. Check your internet connection.");
+                        localStorage.removeItem('pending_order_id');
                     },
                     onClose: function () {
-                        alert('Anda menutup popup tanpa menyelesaikan pembayaran');
+                        console.warn("Popup Closed");
+                        alert('You closed the payment window.');
+                        localStorage.removeItem('pending_order_id');
                     }
                 });
             } else {
                 alert("Gagal memuat sistem pembayaran. Cek koneksi internet.");
             }
-        } else {
-            console.error("No Snap Token", result);
-            alert("Gagal membuat pesanan (Token tidak ada).");
         }
     } catch (e) {
         console.error("Checkout Error:", e);
@@ -106,7 +115,7 @@ const filteredProducts = computed(() => {
                                 class="text-[14px] md:text-lg font-bold text-gray-400 tracking-widest">GloryCafe</span>
                         </div>
                         <div class="text-yellow-400 py-2 text-2xl md:text-4xl font-bold">
-                            Hey, Table {{ customerStore.tableName }}
+                            Hey, {{ customerStore.tableName }}
                         </div>
                         <h2 class="text-lg md:text-4xl font-semibold py-2 text-gray-900 leading-none tracking-tight">
                             Let's Order Our Menus
@@ -119,7 +128,6 @@ const filteredProducts = computed(() => {
             <div class="px-5 md:px-10 py-4 shrink-0 bg-[#F8F9FD]">
                 <div class="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar pb-1">
 
-                    <!-- Tombol All -->
                     <BaseButton @click="activeCategory = 'all'"
                         :variant="activeCategory === 'all' ? 'primary' : 'outline'"
                         class="px-5 py-2.5 rounded-2xl text-[10px] md:text-sm whitespace-nowrap">

@@ -17,6 +17,7 @@ import CategoryList from '@/views/admin/categories/CategoryList.vue';
 import ProductList from '@/views/admin/products/ProductList.vue';
 import UserList from '@/views/admin/users/UserList.vue';
 import TableList from '@/views/admin/tables/TableList.vue';
+import AccessAlert from '@/views/customer/AccessAlert.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,7 +26,31 @@ const router = createRouter({
         {
             path: '/',
             name: 'customer-menu',
-            component: MenuView
+            component: () => import('@/views/customer/MenuView.vue'),
+            beforeEnter: (to, from, next) => {
+                if (to.query.table_uuid || to.query.uuid || to.query.table_id) {
+                    next();
+                } else {
+                    next({ name: 'access-alert' });
+                }
+            }
+        },
+        {
+            path: '/scan',
+            name: 'scan-qr',
+            component: () => import('@/views/customer/MenuView.vue'),
+            beforeEnter: (to, from, next) => {
+                if (to.query.table_uuid || to.query.uuid || to.query.table_id) {
+                    next();
+                } else {
+                    next({ name: 'access-alert' });
+                }
+            }
+        },
+        {
+            path: '/access-alert',
+            name: 'access-alert',
+            component: AccessAlert
         },
         {
             path: '/order-status',

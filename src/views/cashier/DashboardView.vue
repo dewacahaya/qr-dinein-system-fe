@@ -11,7 +11,6 @@ import BaseButton from '@/components/base/BaseButton.vue';
 const cashierStore = useCashierStore();
 const showModal = ref(false);
 const selectedOrder = ref(null);
-const audioEnabled = ref(false);
 
 onMounted(() => {
     cashierStore.fetchOrders();
@@ -32,10 +31,16 @@ const formatTime = (dateString) => {
     return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 };
 
-const getItemName = (item) => item.product?.name || item.name || 'Unknown';
-const getItemImage = (item) => item.product?.image || item.image;
+const getItemName = (item) => {
+    if (item.product && item.product.name) return item.product.name;
+    if (item.product_name) return item.product_name;
+    if (item.name) return item.name;
+};
+const getItemImage = (item) => {
+    console.log("debug item: ", item)
+    return item.product?.image || item.image;
+}
 
-// Actions
 const handleMarkPaid = async () => {
     if (!selectedOrder.value) return;
     if (confirm("Mark order as paid?")) {
@@ -57,20 +62,6 @@ const handleCompleteOrder = async () => {
 
         <main class="p-6 md:p-10 max-w-400 mx-auto">
 
-            <!-- Audio Button -->
-            <!-- <div v-if="!audioEnabled"
-                class="mb-6 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded shadow-sm flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl">🔊</span>
-                    <p class="text-sm text-yellow-800 font-bold">Klik tombol ini agar notifikasi order masuk berbunyi!
-                    </p>
-                </div>
-                <button @click="enableAudio"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-xs transition shadow-md">
-                    Aktifkan Suara
-                </button>
-            </div> -->
-
             <!-- Header -->
             <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>
@@ -84,7 +75,7 @@ const handleCompleteOrder = async () => {
                     <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
                         <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                         <span class="text-sm font-bold text-gray-600">Active Orders: {{ cashierStore.activeOrders.length
-                            }}</span>
+                        }}</span>
                     </div>
                 </div>
             </div>
@@ -126,13 +117,15 @@ const handleCompleteOrder = async () => {
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-center">
                                         <span class="font-bold text-gray-800 text-sm truncate">{{ getItemName(item)
-                                            }}</span>
+                                        }}</span>
                                         <span
                                             class="font-black text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded text-xs">x{{
                                                 item.qty || item.quantity }}</span>
                                     </div>
-                                    <p v-if="item.notes" class="text-[10px] text-red-500 font-bold truncate mt-0.5">
-                                        Note: {{ item.notes }}</p>
+                                    <p v-if="item.notes" class="mt-2 text-xs text-gray-400 inline-block">
+                                        Note: <span class="text-red-600 font-semibold">{{
+                                            item.notes }}</span>
+                                    </p>
                                 </div>
                             </div>
 
@@ -197,9 +190,9 @@ const handleCompleteOrder = async () => {
                                     {{ item.qty || item.quantity }}x
                                 </span>
                             </div>
-                            <p v-if="item.notes"
-                                class="mt-2 text-sm font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg inline-block border border-red-100">
-                                Note {{ item.notes }}
+                            <p v-if="item.notes" class="mt-2 text-sm text-gray-400 inline-block">
+                                Note: <span class="bg-red-100 px-2 py-1 rounded-lg text-red-600 font-semibold">{{
+                                    item.notes }}</span>
                             </p>
                         </div>
                     </div>
@@ -222,13 +215,13 @@ const handleCompleteOrder = async () => {
                     <BaseButton v-if="selectedOrder?.payment_status === 'unpaid'" @click="handleMarkPaid"
                         variant="primary"
                         class="flex-2 py-4 rounded-xl text-lg shadow-xl bg-green-600 hover:bg-green-700 border-none text-white">
-                        💰 Mark as Paid
+                        Mark as Paid
                     </BaseButton>
 
                     <BaseButton v-else-if="selectedOrder?.status === 'ready'" @click="handleCompleteOrder"
                         variant="primary"
                         class="flex-2 py-4 rounded-xl text-lg shadow-xl bg-gray-900 hover:bg-black text-white">
-                        ✅ Complete Order
+                        Complete Order
                     </BaseButton>
 
                     <BaseButton v-else disabled

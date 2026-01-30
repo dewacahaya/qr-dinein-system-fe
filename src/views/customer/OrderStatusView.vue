@@ -91,8 +91,6 @@ onUnmounted(() => {
                 <p class="text-gray-500 text-center font-medium mb-4 max-w-xs leading-relaxed">
                     {{ orderStore.order?.ui_description }}
                 </p>
-
-                <!-- Order Summary Card -->
                 <div
                     class="w-full max-w-sm bg-white rounded-4xl p-6 shadow-xl shadow-gray-200/50 border border-gray-100 mb-6">
 
@@ -103,7 +101,6 @@ onUnmounted(() => {
                         </span>
                     </div>
 
-                    <!-- Loading State -->
                     <div v-if="orderStore.loading && !orderStore.order" class="flex-1 flex items-center justify-center">
                         <div class="text-center">
                             <div
@@ -139,8 +136,6 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Payment Status -->
                     <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment
@@ -153,7 +148,7 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <router-link to="/">
+                <router-link to="/access-alert">
                     <BaseButton variant="secondary"
                         class="w-full p-4 rounded-xl text-black font-bold border border-gray-200 hover:border-black hover:text-black">
                         Make Another Order

@@ -19,6 +19,12 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 5173,
+    allowedHosts: [
+      'tanya-mousey-margarita.ngrok-free.dev',
+      '.ngrok-free.dev',
+      '.ngrok-free.app',
+      'localhost'
+    ],
     proxy: {
       '/api': {
         target: 'https://aaa37fce69f3.ngrok-free.app',
@@ -34,4 +40,9 @@ export default defineConfig({
       }
     }
   },
+  preview: {
+    host: true,
+    port: 4173,
+    allowedHosts: 'all',
+  }
 })
