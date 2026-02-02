@@ -23,6 +23,7 @@ export const useProductStore = defineStore('product', {
                 const response = await apiClient.get('/products');
                 let data = response.data.data || response.data;
                 this.products = data.sort((a, b) => a.id - b.id);
+                console.log("Product loaded: ", this.products)
             } catch (err) {
                 console.error("Fetch Error:", err);
             } finally {

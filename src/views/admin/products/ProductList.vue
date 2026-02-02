@@ -34,7 +34,6 @@ const availabilityOptions = [
     { label: 'Not Available', value: 0 }
 ];
 
-// 1. Initial Data
 onMounted(async () => {
     await Promise.all([
         productStore.fetchProducts(),
@@ -50,7 +49,6 @@ const handleFileUpload = (event) => {
     }
 };
 
-// 3. Open Modal Add
 const openAddModal = () => {
     isEditMode.value = false;
     form.id = null;
@@ -72,7 +70,6 @@ const openEditModal = (product) => {
     form.description = product.description;
     form.price = product.price;
     form.is_available = product.is_available ? 1 : 0;
-
     form.image = null;
     imagePreview.value = getImageUrl(product.image);
     showModal.value = true;
