@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useTableStore } from '@/stores/table';
+import { generatePrintableQr } from '../../../../lib/qr-generator';
 
 // Components
 import Sidebar from '@/components/admin/Sidebar.vue';
@@ -71,14 +72,35 @@ const handleGenerate = async () => {
     }
 };
 
-const handleDownload = () => {
+// const handleDownload = () => {
+//     if (!tableStore.qrCodeBlobUrl) return;
+//     const link = document.createElement('a');
+//     link.href = tableStore.qrCodeBlobUrl;
+//     link.download = `QR-${selectedTable.value.table_number}.png`;
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+// };
+
+const handleDownload = async () => {
     if (!tableStore.qrCodeBlobUrl) return;
-    const link = document.createElement('a');
-    link.href = tableStore.qrCodeBlobUrl;
-    link.download = `QR-${selectedTable.value.table_number}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+        const printableUrl = await generatePrintableQr(
+            tableStore.qrCodeBlobUrl,
+        );
+
+        const link = document.createElement('a');
+        link.href = printableUrl;
+        link.download = `Print-${selectedTable.value.table_number.replace(/\s+/g, '-')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    } catch (error) {
+        console.error(error);
+        alert("Gagal membuat desain cetak. Cek console.");
+    }
 };
 </script>
 
