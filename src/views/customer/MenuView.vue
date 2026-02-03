@@ -77,9 +77,10 @@ const handleCheckoutProcess = async () => {
                         alert("Payment failed. Check your internet connection.");
                         localStorage.removeItem('pending_order_id');
                     },
-                    onClose: function () {
-                        console.warn("Popup Closed");
+                    onClose: function (result) {
+                        console.warn("Popup Closed", result);
                         alert('You closed the payment window.');
+                        router.push(`/order-status?order_id=${orderId}`);
                         localStorage.removeItem('pending_order_id');
                     }
                 });

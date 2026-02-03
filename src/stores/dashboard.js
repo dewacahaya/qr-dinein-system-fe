@@ -90,8 +90,8 @@ export const useDashboardStore = defineStore("dashboard", {
                     }
                 });
 
-                this.chartCategories = Object.keys(grouped); // Sumbu X (Tanggal)
-                this.chartSeries = Object.values(grouped);   // Sumbu Y (Total Revenue)
+                this.chartCategories = Object.keys(grouped);
+                this.chartSeries = Object.values(grouped);
 
                 console.log("📈 Final Chart Data:", this.chartSeries);
 

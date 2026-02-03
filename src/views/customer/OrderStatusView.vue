@@ -12,8 +12,19 @@ const orderId = computed(() => route.query.order_id);
 
 const statusUI = computed(() => {
     const step = orderStore.order?.ui_step || 0;
+    const paymentStatus = orderStore.order?.payment_status;
 
     let ui = { color: 'bg-gray-300', percent: 10, icon: '⏳' };
+
+    if (paymentStatus === 'unpaid') {
+        return {
+            color: 'bg-yellow-500',
+            desc: 'Waiting for payment. Please complete the transaction.',
+            percent: 10,
+            icon: '💳',
+            title: 'Unpaid Order'
+        };
+    }
 
     switch (step) {
         case 1: // Pending
@@ -28,12 +39,45 @@ const statusUI = computed(() => {
         case 4: // Completed
             ui = { color: 'bg-gray-900', desc: 'Your order has been successfully completed. Thank you for your order.', percent: 100, icon: '😊' };
             break;
-        case 0: // Cancelled / Unpaid
+        case 0: // Cancelled
             ui = { color: 'bg-red-500', desc: 'Your order has been cancelled. Please try again.', percent: 100, icon: '❌' };
             break;
     }
     return ui;
 });
+
+const payAgain = () => {
+    const token = orderStore.order?.snap_token;
+    const currentOrderId = orderId.value;
+
+    if (token && window.snap) {
+        localStorage.setItem('pending_order_id', currentOrderId);
+
+        window.snap.pay(token, {
+            onSuccess: (result) => {
+                console.log("Payment Success!", result);
+                localStorage.removeItem('pending_order_id');
+                orderStore.fetchOrder(currentOrderId);
+            },
+            onPending: (result) => {
+                console.log("Payment Pending...", result);
+                localStorage.removeItem('pending_order_id');
+                orderStore.fetchOrder(currentOrderId);
+            },
+            onError: (result) => {
+                console.error("Payment Error", result);
+                localStorage.removeItem('pending_order_id');
+                alert("Payment failed. Check your internet connection.");
+            },
+            onClose: () => {
+                console.log("Popup Closed");
+                localStorage.removeItem('pending_order_id');
+            }
+        });
+    } else {
+        alert("Sistem pembayaran belum siap. Silakan refresh halaman.");
+    }
+};
 
 onMounted(() => {
     if (orderId.value) {
@@ -148,12 +192,23 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <router-link to="/access-alert">
-                    <BaseButton variant="secondary"
-                        class="w-full p-4 rounded-xl text-black font-bold border border-gray-200 hover:border-black hover:text-black">
-                        Make Another Order
-                    </BaseButton>
-                </router-link>
+                <div class="p-6">
+                    <div v-if="orderStore.order?.payment_status === 'unpaid'">
+                        <BaseButton @click="payAgain" variant="primary"
+                            class="w-full p-4 rounded-xl text-lg shadow-xl text-white">
+                            Pay Now
+                        </BaseButton>
+                    </div>
+                    <div v-else>
+                        <router-link to="/access-alert">
+                            <BaseButton variant="secondary"
+                                class="w-full p-4 rounded-xl text-black font-bold border border-gray-200 hover:border-black hover:text-black">
+                                Make Another Order
+                            </BaseButton>
+                        </router-link>
+                    </div>
+
+                </div>
             </div>
 
 

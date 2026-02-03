@@ -67,7 +67,6 @@ const chartOptions = computed(() => ({
         <div class="flex flex-col sm:flex-row flex-wrap items-start justify-between gap-3 mb-6">
             <div>
                 <h3 class="text-xl font-bold text-gray-900">Revenue Analytics</h3>
-                <p class="text-sm text-gray-500">Pendapatan per hari</p>
             </div>
             <div class="flex gap-2 items-center bg-gray-50 p-1 rounded-lg border border-gray-100">
                 <input type="date" v-model="filter.start" @change="applyFilter"

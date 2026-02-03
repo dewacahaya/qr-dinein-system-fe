@@ -22,6 +22,8 @@ const form = reactive({
 });
 
 const selectedTable = ref(null);
+const printableCardUrl = ref(null);
+const isGeneratingCard = ref(false);
 
 onMounted(() => {
     tableStore.fetchTables();
@@ -45,7 +47,6 @@ const handleCreate = async () => {
     }
 };
 
-// --- LOGIC DELETE TABLE ---
 const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this table?')) {
         await tableStore.deleteTable(id);

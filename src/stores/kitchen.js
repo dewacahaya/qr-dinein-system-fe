@@ -22,12 +22,16 @@ export const useKitchenStore = defineStore('kitchen', {
     },
 
     actions: {
+        sortOrders() {
+            this.orders.sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
+        },
+
         async fetchOrders() {
             this.loading = true;
             try {
                 const response = await apiClient.get('/orders/kitchen');
-                let data = response.data.data || [];
-                this.orders = data.sort((a, b) => a.id - b.id);
+                this.orders = response.data.data || [];
+                this.sortOrders();
                 console.log("🔥 FETCHED ORDERS:", this.orders);
             } catch (err) {
                 console.error("Fetch Kitchen Orders Error:", err);
@@ -63,32 +67,39 @@ export const useKitchenStore = defineStore('kitchen', {
             });
         },
 
-        handleIncomingOrder(newOrder) {
+        handleIncomingOrder(newOrder, isNew = false) {
             if (!newOrder || !newOrder.id) return;
+
+            if (newOrder.table && !newOrder.table_number) {
+                newOrder.table_number = newOrder.table.table_number;
+            }
+
             const index = this.orders.findIndex(o => o.id === newOrder.id);
             if (['ready', 'completed', 'cancelled'].includes(newOrder.status)) {
                 if (index !== -1) this.orders.splice(index, 1);
                 return;
-            } if (index !== -1) {
+            }
+            if (index !== -1) {
                 const existingOrder = this.orders[index];
+
+                const itemsToUse = (newOrder.items && newOrder.items.length > 0)
+                    ? newOrder.items
+                    : existingOrder.items;
+
                 const mergedOrder = {
                     ...existingOrder,
-                    status: newOrder.status,
-                    payment_status: newOrder.payment_status,
-                    updated_at: newOrder.updated_at,
-                    ui_step: newOrder.ui_step
+                    ...newOrder,
+                    items: itemsToUse,
+                    table_number: newOrder.table_number || existingOrder.table_number
                 };
 
-                if (!mergedOrder.items || mergedOrder.items.length === 0) {
-                    mergedOrder.items = newOrder.items;
-                }
                 this.orders.splice(index, 1, mergedOrder);
-            } else {
-                if (newOrder.payment_status === 'paid') {
-                    this.orders.push(newOrder);
-                    this.playNotification();
-                }
             }
+            else if (isNew || newOrder.payment_status === 'paid') {
+                this.orders.push(newOrder);
+                this.playNotification();
+            }
+            this.sortOrders();
         },
 
         stopListening() {
@@ -104,8 +115,13 @@ export const useKitchenStore = defineStore('kitchen', {
                 if (newStatus === 'ready') {
                     this.orders.splice(index, 1);
                 } else {
-                    const updatedOrder = { ...this.orders[index], status: newStatus };
+                    const updatedOrder = {
+                        ...this.orders[index],
+                        status: newStatus,
+                        updated_at: new Date().toISOString()
+                    };
                     this.orders.splice(index, 1, updatedOrder);
+                    this.sortOrders();
                 }
             }
 

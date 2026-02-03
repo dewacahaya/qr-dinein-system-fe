@@ -75,21 +75,11 @@ const handleLogout = async () => {
                         <div v-if="showDropdown"
                             class="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in-down">
 
-                            <!-- Mobile View Name (Visible inside dropdown on mobile) -->
                             <div class="px-4 py-2 border-b border-gray-100 md:hidden">
                                 <p class="text-sm font-bold text-slate-800 truncate">{{ currentUser?.name }}</p>
                                 <p class="text-xs text-gray-500 truncate">{{ currentUser?.email }}</p>
                             </div>
 
-                            <router-link to="/admin/profile" @click="showDropdown = false"
-                                class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                                My Profile
-                            </router-link>
-                            <div class="border-t border-gray-100 my-1"></div>
                             <button @click="openLogoutConfirmation"
                                 class="w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

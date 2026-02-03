@@ -6,7 +6,6 @@ export const useTableStore = defineStore('table', {
         tables: [],
         loading: false,
         error: null,
-        // qrCodeSvg: null,
         qrCodeBlobUrl: null,
     }),
 
