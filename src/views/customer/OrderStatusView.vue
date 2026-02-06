@@ -16,7 +16,7 @@ const statusUI = computed(() => {
 
     let ui = { color: 'bg-gray-300', percent: 10, icon: '⏳' };
 
-    if (paymentStatus === 'unpaid') {
+    if (paymentStatus === 'unpaid' || paymentStatus === 'pending') {
         return {
             color: 'bg-yellow-500',
             desc: 'Waiting for payment. Please complete the transaction.',
@@ -48,22 +48,20 @@ const statusUI = computed(() => {
 
 const payAgain = () => {
     const token = orderStore.order?.snap_token;
-    const currentOrderId = orderId.value;
-
     if (token && window.snap) {
-        localStorage.setItem('pending_order_id', currentOrderId);
-
+        localStorage.setItem('pending_order_id', orderId.value);
         window.snap.pay(token, {
             onSuccess: (result) => {
                 console.log("Payment Success!", result);
                 localStorage.removeItem('pending_order_id');
-                orderStore.fetchOrder(currentOrderId);
+                orderStore.fetchOrder(orderId.value);
             },
             onPending: (result) => {
                 console.log("Payment Pending...", result);
                 localStorage.removeItem('pending_order_id');
-                orderStore.fetchOrder(currentOrderId);
+                orderStore.fetchOrder(orderId.value);
             },
+
             onError: (result) => {
                 console.error("Payment Error", result);
                 localStorage.removeItem('pending_order_id');
@@ -193,10 +191,11 @@ onUnmounted(() => {
                 </div>
 
                 <div class="p-6">
-                    <div v-if="orderStore.order?.payment_status === 'unpaid'">
+                    <div
+                        v-if="orderStore.order?.payment_status === 'unpaid' || orderStore.order?.payment_status === 'pending'">
                         <BaseButton @click="payAgain" variant="primary"
                             class="w-full p-4 rounded-xl text-lg shadow-xl text-white">
-                            Pay Now
+                            Return to Payment
                         </BaseButton>
                     </div>
                     <div v-else>

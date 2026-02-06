@@ -72,22 +72,13 @@ const handleGenerate = async () => {
     }
 };
 
-// const handleDownload = () => {
-//     if (!tableStore.qrCodeBlobUrl) return;
-//     const link = document.createElement('a');
-//     link.href = tableStore.qrCodeBlobUrl;
-//     link.download = `QR-${selectedTable.value.table_number}.png`;
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-// };
-
 const handleDownload = async () => {
     if (!tableStore.qrCodeBlobUrl) return;
 
     try {
         const printableUrl = await generatePrintableQr(
             tableStore.qrCodeBlobUrl,
+            selectedTable.value.table_number
         );
 
         const link = document.createElement('a');
